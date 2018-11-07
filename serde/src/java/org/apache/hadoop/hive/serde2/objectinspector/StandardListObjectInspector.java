@@ -135,6 +135,9 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
 
   @Override
   public Object resize(Object list, int newSize) {
+    if (newSize < 0){
+      return null;
+    }
     List<Object> a = (List<Object>) list;
     while (a.size() < newSize) {
       a.add(null);
