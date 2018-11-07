@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -132,7 +132,6 @@ public class JoinOperator extends CommonJoinOperator<JoinDesc> implements Serial
       }
       storage[alias].addRow(nr);
     } catch (Exception e) {
-      e.printStackTrace();
       throw new HiveException(e);
     }
   }

@@ -1,13 +1,15 @@
+--! qt:dataset:src
 DROP TABLE hbase_src;
 
-CREATE TABLE hbase_src(key STRING,
+CREATE EXTERNAL TABLE hbase_src(key STRING,
                        tinyint_col TINYINT,
                        smallint_col SMALLINT,
                        int_col INT,
                        bigint_col BIGINT,
                        float_col FLOAT,
                        double_col DOUBLE,
-                       string_col STRING);
+                       string_col STRING)
+TBLPROPERTIES ("external.table.purge" = "true");
 
 INSERT OVERWRITE TABLE hbase_src
   SELECT key, key, key, key, key, key, key, value
@@ -16,12 +18,12 @@ INSERT OVERWRITE TABLE hbase_src
 
 DROP TABLE t_hbase_maps;
 
-CREATE TABLE t_hbase_maps(key STRING,
+CREATE EXTERNAL TABLE t_hbase_maps(key STRING,
                           string_map_col MAP<STRING, STRING>,
                           simple_string_col STRING)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping"=":key,cf-string:,cf-string:simple_string_col")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name"="t_hive_maps");
+TBLPROPERTIES ("hbase.table.name"="t_hive_maps", "external.table.purge" = "true");
 
 INSERT OVERWRITE TABLE t_hbase_maps
   SELECT key,
@@ -45,7 +47,7 @@ CREATE EXTERNAL TABLE t_ext_hbase_maps(key STRING,
                                        string_map_cols MAP<STRING, STRING>, simple_string_col STRING)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping"=":key,cf-string:string_col.*,cf-string:simple_string_col")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name"="t_hive_maps");
+TBLPROPERTIES ("hbase.table.name"="t_hive_maps");
 
 SELECT * FROM t_ext_hbase_maps ORDER BY key;
 
@@ -58,7 +60,7 @@ CREATE EXTERNAL TABLE t_ext_hbase_maps_cut_prefix(key STRING,
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping"=":key,cf-string:string_.*,cf-string:simple_string_col"
     ,"hbase.columns.mapping.prefix.hide"="true")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name"="t_hive_maps");
+TBLPROPERTIES ("hbase.table.name"="t_hive_maps");
 
 SELECT * FROM t_ext_hbase_maps_cut_prefix ORDER BY key;
 

@@ -23,9 +23,12 @@ value               	string
 PREHOOK: query: explain
 insert overwrite table nzhang_part5 partition (value) select key, value from src
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+PREHOOK: Output: default@nzhang_part5
 POSTHOOK: query: explain
 insert overwrite table nzhang_part5 partition (value) select key, value from src
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -53,6 +56,7 @@ STAGE PLANS:
                           output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                           serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                           name: default.nzhang_part5
+            Execution mode: vectorized
 
   Stage: Stage-0
     Move Operator

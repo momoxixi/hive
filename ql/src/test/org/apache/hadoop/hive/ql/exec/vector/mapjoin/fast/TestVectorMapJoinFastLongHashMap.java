@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -28,6 +28,8 @@ import org.apache.hadoop.hive.ql.exec.vector.mapjoin.fast.CheckFastHashTable.Ver
 import org.apache.hadoop.hive.ql.exec.vector.mapjoin.fast.VectorMapJoinFastLongHashMap;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.plan.VectorMapJoinDesc.HashTableKeyType;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -276,6 +278,7 @@ public class TestVectorMapJoinFastLongHashMap extends CommonFastHashTable {
     addAndVerifyMultipleKeyMultipleValue(keyCount, map, verifyTable);
   }
 
+  @Ignore
   @Test
   public void testOutOfBounds() throws Exception {
     random = new Random(42662);

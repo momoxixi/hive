@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.JavaUtils;
+import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.llap.LlapOutputFormat;
@@ -70,6 +72,7 @@ import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinarySerDe;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputFormat;
@@ -78,6 +81,7 @@ import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static org.apache.hive.common.util.HiveStringUtils.quoteComments;
 
 /**
  * PlanUtils.
@@ -110,6 +114,9 @@ public final class PlanUtils {
 
   public static TableDesc getDefaultTableDesc(CreateTableDesc directoryDesc,
       String cols, String colTypes ) {
+    // TODO: this should have an option for directory to inherit from the parent table,
+    //       including bucketing and list bucketing, for the use in compaction when the
+    //       latter runs inside a transaction.
     TableDesc ret = getDefaultTableDesc(Integer.toString(Utilities.ctrlaCode), cols,
         colTypes, false);;
     if (directoryDesc == null) {
@@ -147,6 +154,9 @@ public final class PlanUtils {
       }
       if (directoryDesc.getSerdeProps() != null) {
         properties.putAll(directoryDesc.getSerdeProps());
+      }
+      if (directoryDesc.getInputFormat() != null){
+        ret.setInputFileFormatClass(JavaUtils.loadClass(directoryDesc.getInputFormat()));
       }
       if (directoryDesc.getOutputFormat() != null){
         ret.setOutputFileFormatClass(JavaUtils.loadClass(directoryDesc.getOutputFormat()));
@@ -784,7 +794,7 @@ public final class PlanUtils {
     return new ReduceSinkDesc(keyCols, numKeys, valueCols, outputKeyCols,
         distinctColIndices, outputValCols,
         tag, partitionCols, numReducers, keyTable,
-        valueTable);
+        valueTable, writeType);
   }
 
   /**
@@ -971,6 +981,14 @@ public final class PlanUtils {
       HiveStorageHandler storageHandler = HiveUtils.getStorageHandler(jobConf, handlerClass);
       if (storageHandler != null) {
         storageHandler.configureJobConf(tableDesc, jobConf);
+      }
+      if (tableDesc.getJobSecrets() != null) {
+        for (Map.Entry<String, String> entry : tableDesc.getJobSecrets().entrySet()) {
+          String key = TableDesc.SECRET_PREFIX + TableDesc.SECRET_DELIMIT +
+                  tableDesc.getTableName() + TableDesc.SECRET_DELIMIT + entry.getKey();
+          jobConf.getCredentials().addSecretKey(new Text(key), entry.getValue().getBytes());
+        }
+        tableDesc.getJobSecrets().clear();
       }
     } catch (HiveException e) {
       throw new RuntimeException(e);
@@ -1196,5 +1214,33 @@ public final class PlanUtils {
    */
   public static Class<? extends AbstractSerDe> getDefaultSerDe() {
     return LazySimpleSerDe.class;
+  }
+
+  /**
+   * Get a Map of table or partition properties to be used in explain extended output.
+   * Do some filtering to make output readable and/or concise.
+   */
+  static Map getPropertiesExplain(Properties properties) {
+    if (properties != null) {
+      Map<Object, Object> clone = null;
+      String value = properties.getProperty("columns.comments");
+      if (value != null) {
+        // should copy properties first
+        clone = new HashMap<>(properties);
+        clone.put("columns.comments", quoteComments(value));
+      }
+      value = properties.getProperty(StatsSetupConst.NUM_ERASURE_CODED_FILES);
+      if ("0".equals(value)) {
+        // should copy properties first
+        if (clone == null) {
+          clone = new HashMap<>(properties);
+        }
+        clone.remove(StatsSetupConst.NUM_ERASURE_CODED_FILES);
+      }
+      if (clone != null) {
+        return clone;
+      }
+    }
+    return properties;
   }
 }

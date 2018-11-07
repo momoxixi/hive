@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -28,9 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.fs.FileStatus;
@@ -42,16 +44,22 @@ import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.WMFullResourcePlan;
 import org.apache.hadoop.hive.metastore.api.WMResourcePlan;
+import org.apache.hadoop.hive.metastore.api.WMValidateResourcePlanResponse;
+import org.apache.hadoop.hive.ql.metadata.CheckConstraint;
+import org.apache.hadoop.hive.ql.metadata.DefaultConstraint;
 import org.apache.hadoop.hive.ql.metadata.ForeignKeyInfo;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.NotNullConstraint;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.PrimaryKeyInfo;
+import org.apache.hadoop.hive.ql.metadata.StorageHandlerInfo;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.metadata.UniqueConstraint;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;
+
+import static org.apache.hadoop.hive.conf.Constants.MATERIALIZED_VIEW_REWRITING_TIME_WINDOW;
 
 /**
  * Format table and index information for machine readability using
@@ -105,6 +113,50 @@ public class JsonMetaDataFormatter implements MetaDataFormatter {
   }
 
   /**
+   * Show a list of materialized views.
+   */
+  @Override
+  public void showMaterializedViews(DataOutputStream out, List<Table> materializedViews)
+      throws HiveException {
+    if (materializedViews.isEmpty()) {
+      // Nothing to do
+      return;
+    }
+
+    MapBuilder builder = MapBuilder.create();
+    ArrayList<Map<String, Object>> res = new ArrayList<Map<String, Object>>();
+    for (Table mv : materializedViews) {
+      final String mvName = mv.getTableName();
+      final String rewriteEnabled = mv.isRewriteEnabled() ? "Yes" : "No";
+      // Currently, we only support manual refresh
+      // TODO: Update whenever we have other modes
+      final String refreshMode = "Manual refresh";
+      final String timeWindowString = mv.getProperty(MATERIALIZED_VIEW_REWRITING_TIME_WINDOW);
+      final String mode;
+      if (!org.apache.commons.lang.StringUtils.isEmpty(timeWindowString)) {
+        long time = HiveConf.toTime(timeWindowString,
+            HiveConf.getDefaultTimeUnit(HiveConf.ConfVars.HIVE_MATERIALIZED_VIEW_REWRITING_TIME_WINDOW),
+            TimeUnit.MINUTES);
+        if (time > 0L) {
+          mode = refreshMode + " (Valid for " + time + "min)";
+        } else if (time == 0L) {
+          mode = refreshMode + " (Valid until source tables modified)";
+        } else {
+          mode = refreshMode + " (Valid always)";
+        }
+      } else {
+        mode = refreshMode;
+      }
+      res.add(builder
+          .put("MV Name", mvName)
+          .put("Rewriting Enabled", rewriteEnabled)
+          .put("Mode", mode)
+          .build());
+    }
+    asJson(out, builder.put("materialized views", res).build());
+  }
+
+  /**
    * Describe table.
    */
   @Override
@@ -113,7 +165,8 @@ public class JsonMetaDataFormatter implements MetaDataFormatter {
       boolean isFormatted, boolean isExt,
       boolean isOutputPadded, List<ColumnStatisticsObj> colStats,
       PrimaryKeyInfo pkInfo, ForeignKeyInfo fkInfo,
-      UniqueConstraint ukInfo, NotNullConstraint nnInfo) throws HiveException {
+      UniqueConstraint ukInfo, NotNullConstraint nnInfo, DefaultConstraint dInfo,
+      CheckConstraint cInfo, StorageHandlerInfo storageHandlerInfo) throws HiveException {
     MapBuilder builder = MapBuilder.create();
     builder.put("columns", makeColsUnformatted(cols));
 
@@ -135,6 +188,15 @@ public class JsonMetaDataFormatter implements MetaDataFormatter {
       }
       if (nnInfo != null && !nnInfo.getNotNullConstraints().isEmpty()) {
         builder.put("notNullConstraintInfo", nnInfo);
+      }
+      if (dInfo != null && !dInfo.getDefaultConstraints().isEmpty()) {
+        builder.put("defaultConstraintInfo", dInfo);
+      }
+      if (cInfo != null && !cInfo.getCheckConstraints().isEmpty()) {
+        builder.put("checkConstraintInfo", cInfo);
+      }
+      if(storageHandlerInfo != null) {
+        builder.put("storageHandlerInfo", storageHandlerInfo.toString());
       }
     }
 
@@ -190,20 +252,21 @@ public class JsonMetaDataFormatter implements MetaDataFormatter {
         if (par.getLocation() != null) {
           tblLoc = par.getDataLocation().toString();
         }
-        inputFormattCls = par.getInputFormatClass().getName();
-        outputFormattCls = par.getOutputFormatClass().getName();
+        inputFormattCls = par.getInputFormatClass() == null ? null : par.getInputFormatClass().getName();
+        outputFormattCls = par.getOutputFormatClass() == null ? null : par.getOutputFormatClass().getName();
       }
     } else {
       if (tbl.getPath() != null) {
         tblLoc = tbl.getDataLocation().toString();
       }
-      inputFormattCls = tbl.getInputFormatClass().getName();
-      outputFormattCls = tbl.getOutputFormatClass().getName();
+      inputFormattCls = tbl.getInputFormatClass() == null ? null : tbl.getInputFormatClass().getName();
+      outputFormattCls = tbl.getOutputFormatClass() == null ? null : tbl.getOutputFormatClass().getName();
     }
 
     MapBuilder builder = MapBuilder.create();
 
     builder.put("tableName", tbl.getTableName());
+    builder.put("ownerType", (tbl.getOwnerType() != null) ? tbl.getOwnerType().name() : "null");
     builder.put("owner", tbl.getOwner());
     builder.put("location", tblLoc);
     builder.put("inputFormat", inputFormattCls);
@@ -472,7 +535,6 @@ public class JsonMetaDataFormatter implements MetaDataFormatter {
    */
   private static class JsonRPFormatter implements MetaDataFormatUtils.RPFormatter, Closeable {
     private final JsonGenerator generator;
-    private boolean inPool = false;
 
     JsonRPFormatter(DataOutputStream out) throws IOException {
       generator = new ObjectMapper().getJsonFactory().createJsonGenerator(out);
@@ -489,49 +551,81 @@ public class JsonMetaDataFormatter implements MetaDataFormatter {
     }
 
     @Override
-    public void formatRP(String rpName, Object ... kvPairs) throws IOException {
+    public void startRP(String rpName, Object ... kvPairs) throws IOException {
       generator.writeStartObject();
       writeNameAndFields(rpName, kvPairs);
+    }
+
+    @Override
+    public void endRP() throws IOException {
+      // End the root rp object.
+      generator.writeEndObject();
+    }
+
+    @Override
+    public void startPools() throws IOException {
       generator.writeArrayFieldStart("pools");
     }
 
     @Override
-    public void formatPool(String poolName, int indentLevel, Object ... kvPairs)
-        throws IOException {
-      if (inPool) {
-        // End the triggers array.
-        generator.writeEndArray();
-        // End the pool object.
-        generator.writeEndObject();
-      } else {
-        inPool = true;
-      }
-      generator.writeStartObject();
-      writeNameAndFields(poolName, kvPairs);
-      generator.writeArrayFieldStart("triggers");
-      // triggers array and pool object left to be ended.
+    public void endPools() throws IOException {
+      // End the pools array.
+      generator.writeEndArray();
     }
 
     @Override
-    public void formatTrigger(String triggerName, String actionExpression, String triggerExpression,
-        int indentLevel) throws IOException {
+    public void startPool(String poolName, Object ... kvPairs) throws IOException {
+      generator.writeStartObject();
+      writeNameAndFields(poolName, kvPairs);
+    }
+
+    @Override
+    public void startTriggers() throws IOException {
+      generator.writeArrayFieldStart("triggers");
+    }
+
+    @Override
+    public void endTriggers() throws IOException {
+      generator.writeEndArray();
+    }
+
+    @Override
+    public void startMappings() throws IOException {
+      generator.writeArrayFieldStart("mappings");
+    }
+
+    @Override
+    public void endMappings() throws IOException {
+      generator.writeEndArray();
+    }
+
+    @Override
+    public void endPool() throws IOException {
+      generator.writeEndObject();
+    }
+
+    @Override
+    public void formatTrigger(String triggerName, String actionExpression,
+        String triggerExpression) throws IOException {
       generator.writeStartObject();
       writeNameAndFields(triggerName, "action", actionExpression, "trigger", triggerExpression);
       generator.writeEndObject();
     }
 
     @Override
-    public void close() throws IOException {
-      if (inPool) {
-        // end the triggers within pool object.
-        generator.writeEndArray();
-        // End the last pool object.
-        generator.writeEndObject();
+    public void formatMappingType(String type, List<String> names) throws IOException {
+      generator.writeStartObject();
+      generator.writeStringField("type", type);
+      generator.writeArrayFieldStart("values");
+      for (String name : names) {
+        generator.writeString(name);
       }
-      // End the pools array.
       generator.writeEndArray();
-      // End the root rp object.
       generator.writeEndObject();
+    }
+
+    @Override
+    public void close() throws IOException {
       generator.close();
     }
   }
@@ -546,15 +640,26 @@ public class JsonMetaDataFormatter implements MetaDataFormatter {
   }
 
   @Override
-  public void showErrors(DataOutputStream out, List<String> errors) throws HiveException {
+  public void showErrors(DataOutputStream out, WMValidateResourcePlanResponse response)
+      throws HiveException {
     JsonGenerator generator = null;
     try {
       generator = new ObjectMapper().getJsonFactory().createJsonGenerator(out);
-      generator.writeStartArray();
-      for (String error : errors) {
+      generator.writeStartObject();
+
+      generator.writeArrayFieldStart("errors");
+      for (String error : response.getErrors()) {
         generator.writeString(error);
       }
       generator.writeEndArray();
+
+      generator.writeArrayFieldStart("warnings");
+      for (String error : response.getWarnings()) {
+        generator.writeString(error);
+      }
+      generator.writeEndArray();
+
+      generator.writeEndObject();
     } catch (IOException e) {
       throw new HiveException(e);
     } finally {

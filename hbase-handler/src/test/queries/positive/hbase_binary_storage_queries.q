@@ -1,6 +1,7 @@
+--! qt:dataset:src
 DROP TABLE t_hbase;
 
-CREATE TABLE t_hbase(key STRING,
+CREATE EXTERNAL TABLE t_hbase(key STRING,
                      tinyint_col TINYINT,
                      smallint_col SMALLINT,
                      int_col INT,
@@ -10,8 +11,9 @@ CREATE TABLE t_hbase(key STRING,
                      boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#-,cf:binarybyte#-,cf:binaryshort#-,cf:binaryint#-,cf:binarylong#-,cf:binaryfloat#-,cf:binarydouble#-,cf:binaryboolean#-")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive",
-               "hbase.table.default.storage.type" = "binary");
+TBLPROPERTIES ("hbase.table.name" = "t_hive",
+               "hbase.table.default.storage.type" = "binary",
+               "external.table.purge" = "true");
 
 DESCRIBE FORMATTED t_hbase;
 
@@ -63,7 +65,7 @@ CREATE EXTERNAL TABLE t_hbase_1(key STRING,
                                 boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#b,cf:binarybyte#b,cf:binaryshort#b,cf:binaryint#b,cf:binarylong#b,cf:binaryfloat#b,cf:binarydouble#b,cf:binaryboolean#b")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive");
+TBLPROPERTIES ("hbase.table.name" = "t_hive");
 
 DESCRIBE FORMATTED t_hbase_1;
 
@@ -92,7 +94,7 @@ DROP TABLE t_hbase_1;
 DROP TABLE t_hbase;
 DROP TABLE t_hbase_2;
 
-CREATE TABLE t_hbase_2(key STRING,
+CREATE EXTERNAL TABLE t_hbase_2(key STRING,
                      tinyint_col TINYINT,
                      smallint_col SMALLINT,
                      int_col INT,
@@ -102,7 +104,7 @@ CREATE TABLE t_hbase_2(key STRING,
                      boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#-,cf:binarybyte#-,cf:binaryshort#-,cf:binaryint#-,cf:binarylong#-,cf:binaryfloat#-,cf:binarydouble#-,cf:binaryboolean#-")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive_2");
+TBLPROPERTIES ("hbase.table.name" = "t_hive_2", "external.table.purge" = "true");
 
 INSERT OVERWRITE TABLE t_hbase_2
 SELECT 'user1', 1, 1, 1, 1, 1.0, 1.0, true
@@ -152,7 +154,7 @@ CREATE EXTERNAL TABLE t_hbase_3(key STRING,
                                 boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#b,cf:binarybyte#b,cf:binaryshort#b,cf:binaryint#b,cf:binarylong#b,cf:binaryfloat#b,cf:binarydouble#b,cf:binaryboolean#b")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive_2");
+TBLPROPERTIES ("hbase.table.name" = "t_hive_2");
 
 SELECT * FROM t_hbase_3;
 
@@ -190,8 +192,9 @@ CREATE EXTERNAL TABLE t_hbase_4(key STRING,
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#-,cf:binarybyte#-,cf:binaryshort#-,cf:binaryint#-,cf:binarylong#-,cf:binaryfloat#-,cf:binarydouble#-,cf:binaryboolean#-")
 TBLPROPERTIES (
-"hbase.mapreduce.hfileoutputformat.table.name" = "t_hive_2",
-"hbase.table.default.storage.type" = "binary");
+"hbase.table.name" = "t_hive_2",
+"hbase.table.default.storage.type" = "binary",
+"external.table.purge" = "true");
 
 SELECT * FROM t_hbase_4;
 

@@ -57,6 +57,11 @@ where a.k1 > 20
 )
 subq
 PREHOOK: type: QUERY
+PREHOOK: Input: default@dst_union22
+PREHOOK: Input: default@dst_union22@ds=1
+PREHOOK: Input: default@dst_union22_delta
+PREHOOK: Input: default@dst_union22_delta@ds=1
+PREHOOK: Output: default@dst_union22@ds=2
 POSTHOOK: query: explain extended
 insert overwrite table dst_union22 partition (ds='2')
 select * from
@@ -70,6 +75,22 @@ where a.k1 > 20
 )
 subq
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@dst_union22
+POSTHOOK: Input: default@dst_union22@ds=1
+POSTHOOK: Input: default@dst_union22_delta
+POSTHOOK: Input: default@dst_union22_delta@ds=1
+POSTHOOK: Output: default@dst_union22@ds=2
+OPTIMIZED SQL: SELECT `k1`, `k2`, `k3`, `k4`
+FROM `default`.`dst_union22_delta`
+WHERE `ds` = '1' AND `k0` <= 50
+UNION ALL
+SELECT `t2`.`k1`, `t2`.`k2`, `t4`.`k3`, `t4`.`k4`
+FROM (SELECT `k1`, `k2`, `ds`
+FROM `default`.`dst_union22`
+WHERE `k1` > 20) AS `t2`
+LEFT JOIN (SELECT `k1`, `k3`, `k4`
+FROM `default`.`dst_union22_delta`
+WHERE `ds` = '1' AND `k0` > 50 AND `k1` > 20) AS `t4` ON `t2`.`k1` = `t4`.`k1` AND `t2`.`ds` = '1'
 STAGE DEPENDENCIES:
   Stage-7 is a root stage , consists of Stage-8, Stage-4
   Stage-8 has a backup stage: Stage-4
@@ -86,7 +107,7 @@ STAGE PLANS:
   Stage: Stage-8
     Map Reduce Local Work
       Alias -> Map Local Tables:
-        null-subquery2:$hdt$_0-subquery2:$hdt$_1:dst_union22_delta 
+        $hdt$_0-subquery2:$hdt$_1:dst_union22_delta 
           Fetch Operator
             limit: -1
             Partition Description:
@@ -121,6 +142,7 @@ STAGE PLANS:
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
                       bucket_count -1
+                      bucketing_version 2
                       column.name.delimiter ,
                       columns k0,k1,k2,k3,k4,k5
                       columns.comments 
@@ -137,14 +159,15 @@ STAGE PLANS:
                     name: default.dst_union22_delta
                   name: default.dst_union22_delta
       Alias -> Map Local Operator Tree:
-        null-subquery2:$hdt$_0-subquery2:$hdt$_1:dst_union22_delta 
+        $hdt$_0-subquery2:$hdt$_1:dst_union22_delta 
           TableScan
             alias: dst_union22_delta
+            filterExpr: ((UDFToDouble(k0) > 50.0D) and (UDFToDouble(k1) > 20.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 16936 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
               isSamplingPred: false
-              predicate: ((UDFToDouble(k0) > 50.0) and (UDFToDouble(k1) > 20.0)) (type: boolean)
+              predicate: ((UDFToDouble(k0) > 50.0D) and (UDFToDouble(k1) > 20.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 1862 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: k1 (type: string), k3 (type: string), k4 (type: string)
@@ -166,11 +189,12 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: a
+            filterExpr: (UDFToDouble(k1) > 20.0D) (type: boolean)
             Statistics: Num rows: 500 Data size: 11124 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
               isSamplingPred: false
-              predicate: (UDFToDouble(k1) > 20.0) (type: boolean)
+              predicate: (UDFToDouble(k1) > 20.0D) (type: boolean)
               Statistics: Num rows: 166 Data size: 3693 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: k1 (type: string), k2 (type: string), ds (type: string)
@@ -212,6 +236,7 @@ STAGE PLANS:
                       TotalFiles: 1
                       GatherStats: false
                       MultiFileSpray: false
+      Execution mode: vectorized
       Local Work:
         Map Reduce Local Work
       Path -> Alias:
@@ -249,6 +274,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns k1,k2,k3,k4
                 columns.comments 
@@ -296,6 +322,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns k0,k1,k2,k3,k4,k5
                 columns.comments 
@@ -312,18 +339,19 @@ STAGE PLANS:
               name: default.dst_union22_delta
             name: default.dst_union22_delta
       Truncated Path -> Alias:
-        /dst_union22/ds=1 [null-subquery2:$hdt$_0-subquery2:$hdt$_0:a]
+        /dst_union22/ds=1 [$hdt$_0-subquery2:$hdt$_0:a]
 
   Stage: Stage-2
     Map Reduce
       Map Operator Tree:
           TableScan
             alias: dst_union22_delta
+            filterExpr: ((ds = '1') and (UDFToDouble(k0) <= 50.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 16936 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
               isSamplingPred: false
-              predicate: (UDFToDouble(k0) <= 50.0) (type: boolean)
+              predicate: (UDFToDouble(k0) <= 50.0D) (type: boolean)
               Statistics: Num rows: 166 Data size: 5622 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: k1 (type: string), k2 (type: string), k3 (type: string), k4 (type: string)
@@ -344,6 +372,7 @@ STAGE PLANS:
                         output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                         properties:
                           bucket_count -1
+                          bucketing_version 2
                           column.name.delimiter ,
                           columns k1,k2,k3,k4
                           columns.comments 
@@ -397,6 +426,7 @@ STAGE PLANS:
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
                       bucket_count -1
+                      bucketing_version 2
                       column.name.delimiter ,
                       columns k1,k2,k3,k4
                       columns.comments 
@@ -490,6 +520,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns k0,k1,k2,k3,k4,k5
                 columns.comments 
@@ -506,7 +537,7 @@ STAGE PLANS:
               name: default.dst_union22_delta
             name: default.dst_union22_delta
       Truncated Path -> Alias:
-        /dst_union22_delta/ds=1 [null-subquery1:$hdt$_0-subquery1:dst_union22_delta]
+        /dst_union22_delta/ds=1 [$hdt$_0-subquery1:dst_union22_delta]
 #### A masked pattern was here ####
       Needs Tagging: false
       Reduce Operator Tree:
@@ -555,6 +586,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns k1,k2,k3,k4
                 columns.comments 
@@ -585,11 +617,12 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: a
+            filterExpr: (UDFToDouble(k1) > 20.0D) (type: boolean)
             Statistics: Num rows: 500 Data size: 11124 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
               isSamplingPred: false
-              predicate: (UDFToDouble(k1) > 20.0) (type: boolean)
+              predicate: (UDFToDouble(k1) > 20.0D) (type: boolean)
               Statistics: Num rows: 166 Data size: 3693 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: k1 (type: string), k2 (type: string), ds (type: string)
@@ -606,11 +639,12 @@ STAGE PLANS:
                   auto parallelism: false
           TableScan
             alias: dst_union22_delta
+            filterExpr: ((UDFToDouble(k0) > 50.0D) and (UDFToDouble(k1) > 20.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 16936 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
               isSamplingPred: false
-              predicate: ((UDFToDouble(k0) > 50.0) and (UDFToDouble(k1) > 20.0)) (type: boolean)
+              predicate: ((UDFToDouble(k0) > 50.0D) and (UDFToDouble(k1) > 20.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 1862 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: k1 (type: string), k3 (type: string), k4 (type: string)
@@ -660,6 +694,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns k1,k2,k3,k4
                 columns.comments 
@@ -707,6 +742,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns k0,k1,k2,k3,k4,k5
                 columns.comments 
@@ -723,8 +759,8 @@ STAGE PLANS:
               name: default.dst_union22_delta
             name: default.dst_union22_delta
       Truncated Path -> Alias:
-        /dst_union22/ds=1 [null-subquery2:$hdt$_0-subquery2:$hdt$_0:a]
-        /dst_union22_delta/ds=1 [null-subquery2:$hdt$_0-subquery2:$hdt$_1:dst_union22_delta]
+        /dst_union22/ds=1 [$hdt$_0-subquery2:$hdt$_0:a]
+        /dst_union22_delta/ds=1 [$hdt$_0-subquery2:$hdt$_1:dst_union22_delta]
       Needs Tagging: true
       Reduce Operator Tree:
         Join Operator

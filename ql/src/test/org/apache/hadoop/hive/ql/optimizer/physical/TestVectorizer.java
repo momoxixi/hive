@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -112,7 +112,10 @@ public class TestVectorizer {
     vectorDesc.setVecAggrDescs(
         new VectorAggregationDesc[] {
           new VectorAggregationDesc(
-              aggDesc, new GenericUDAFSum.GenericUDAFSumLong(), TypeInfoFactory.longTypeInfo, ColumnVector.Type.LONG, null,
+              aggDesc.getGenericUDAFName(),
+              new GenericUDAFSum.GenericUDAFSumLong(),
+              aggDesc.getMode(),
+              TypeInfoFactory.longTypeInfo, ColumnVector.Type.LONG, null,
               TypeInfoFactory.longTypeInfo, ColumnVector.Type.LONG, VectorUDAFCountStar.class)});
 
     desc.setOutputColumnNames(outputColumnNames);

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -36,15 +36,13 @@ import java.util.Arrays;
  * This implementation has much lesser L1 data cache misses than {@link BloomFilter}.
  */
 public class BloomKFilter {
-  private byte[] BYTE_ARRAY_4 = new byte[4];
-  private byte[] BYTE_ARRAY_8 = new byte[8];
   public static final float DEFAULT_FPP = 0.05f;
   private static final int DEFAULT_BLOCK_SIZE = 8;
   private static final int DEFAULT_BLOCK_SIZE_BITS = (int) (Math.log(DEFAULT_BLOCK_SIZE) / Math.log(2));
   private static final int DEFAULT_BLOCK_OFFSET_MASK = DEFAULT_BLOCK_SIZE - 1;
   private static final int DEFAULT_BIT_OFFSET_MASK = Long.SIZE - 1;
   private final long[] masks = new long[DEFAULT_BLOCK_SIZE];
-  private BitSet bitSet;
+  private final BitSet bitSet;
   private final int m;
   private final int k;
   // spread k-1 bits to adjacent longs, default is 8
@@ -149,14 +147,13 @@ public class BloomKFilter {
   }
 
   public void addInt(int val) {
-    // puts int in little endian order
-    addBytes(intToByteArrayLE(val));
+    addHash(Murmur3.hash64(val));
   }
 
 
   public void addLong(long val) {
     // puts long in little endian order
-    addBytes(longToByteArrayLE(val));
+    addHash(Murmur3.hash64(val));
   }
 
   public void addFloat(float val) {
@@ -184,6 +181,7 @@ public class BloomKFilter {
   private boolean testHash(long hash64) {
     final int hash1 = (int) hash64;
     final int hash2 = (int) (hash64 >>> 32);
+    final long[] bits = bitSet.data;
 
     int firstHash = hash1 + hash2;
     // hashcode should be positive, flip all the bits if it's negative
@@ -216,7 +214,7 @@ public class BloomKFilter {
     long expected = 0;
     for (int i = 0; i < DEFAULT_BLOCK_SIZE; i++) {
       final long mask = masks[i];
-      expected |= (bitSet.data[blockBaseOffset + i] & mask) ^ mask;
+      expected |= (bits[blockBaseOffset + i] & mask) ^ mask;
     }
 
     // clear the mask for array reuse (this is to avoid masks array allocation in inner loop)
@@ -235,11 +233,11 @@ public class BloomKFilter {
   }
 
   public boolean testInt(int val) {
-    return testBytes(intToByteArrayLE(val));
+    return testHash(Murmur3.hash64(val));
   }
 
   public boolean testLong(long val) {
-    return testBytes(longToByteArrayLE(val));
+    return testHash(Murmur3.hash64(val));
   }
 
   public boolean testFloat(float val) {
@@ -248,26 +246,6 @@ public class BloomKFilter {
 
   public boolean testDouble(double val) {
     return testLong(Double.doubleToLongBits(val));
-  }
-
-  private byte[] intToByteArrayLE(int val) {
-    BYTE_ARRAY_4[0] = (byte) (val >> 0);
-    BYTE_ARRAY_4[1] = (byte) (val >> 8);
-    BYTE_ARRAY_4[2] = (byte) (val >> 16);
-    BYTE_ARRAY_4[3] = (byte) (val >> 24);
-    return BYTE_ARRAY_4;
-  }
-
-  private byte[] longToByteArrayLE(long val) {
-    BYTE_ARRAY_8[0] = (byte) (val >> 0);
-    BYTE_ARRAY_8[1] = (byte) (val >> 8);
-    BYTE_ARRAY_8[2] = (byte) (val >> 16);
-    BYTE_ARRAY_8[3] = (byte) (val >> 24);
-    BYTE_ARRAY_8[4] = (byte) (val >> 32);
-    BYTE_ARRAY_8[5] = (byte) (val >> 40);
-    BYTE_ARRAY_8[6] = (byte) (val >> 48);
-    BYTE_ARRAY_8[7] = (byte) (val >> 56);
-    return BYTE_ARRAY_8;
   }
 
   public long sizeInBytes() {

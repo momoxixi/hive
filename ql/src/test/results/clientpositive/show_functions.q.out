@@ -26,11 +26,13 @@ add_months
 aes_decrypt
 aes_encrypt
 and
+approx_distinct
 array
 array_contains
 ascii
 asin
 assert_true
+assert_true_oom
 atan
 avg
 base64
@@ -38,6 +40,7 @@ between
 bin
 bloom_filter
 bround
+bucket_number
 cardinality_violation
 case
 cbrt
@@ -62,8 +65,12 @@ covar_samp
 crc32
 create_union
 cume_dist
+current_authorizer
+current_catalog
 current_database
 current_date
+current_groups
+current_schema
 current_timestamp
 current_user
 date_add
@@ -81,10 +88,7 @@ div
 e
 elt
 encode
-ewah_bitmap
-ewah_bitmap_and
-ewah_bitmap_empty
-ewah_bitmap_or
+enforce_constraint
 exp
 explode
 extract_union
@@ -128,6 +132,7 @@ isnottrue
 isnull
 istrue
 java_method
+json_read
 json_tuple
 lag
 last_day
@@ -166,6 +171,7 @@ minute
 mod
 month
 months_between
+murmur_hash
 named_struct
 negative
 next_day
@@ -213,6 +219,7 @@ regr_syy
 repeat
 replace
 replicate_rows
+restrict_information_schema
 reverse
 rlike
 round
@@ -248,6 +255,7 @@ substr
 substring
 substring_index
 sum
+surrogate_key
 tan
 to_date
 to_epoch_milli
@@ -256,7 +264,15 @@ to_utc_timestamp
 translate
 trim
 trunc
+tumbling_window
 ucase
+udftoboolean
+udftobyte
+udftodouble
+udftofloat
+udftointeger
+udftolong
+udftoshort
 unbase64
 unhex
 unix_timestamp
@@ -310,8 +326,12 @@ covar_samp
 crc32
 create_union
 cume_dist
+current_authorizer
+current_catalog
 current_database
 current_date
+current_groups
+current_schema
 current_timestamp
 current_user
 PREHOOK: query: SHOW FUNCTIONS '.*e$'
@@ -358,6 +378,8 @@ space
 to_date
 translate
 ucase
+udftobyte
+udftodouble
 variance
 xpath_double
 PREHOOK: query: SHOW FUNCTIONS 'log.*'
@@ -414,6 +436,7 @@ minute
 mod
 month
 months_between
+murmur_hash
 xpath
 xpath_boolean
 xpath_double

@@ -5,6 +5,9 @@ FROM
 LEFT SEMI JOIN src yy
 ON xx.key=yy.key
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+PREHOOK: Input: default@src1
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT xx.key, xx.cnt
 FROM
@@ -12,6 +15,9 @@ FROM
 LEFT SEMI JOIN src yy
 ON xx.key=yy.key
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+POSTHOOK: Input: default@src1
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -24,6 +30,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: x
+            filterExpr: key is not null (type: boolean)
             Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
               predicate: key is not null (type: boolean)
@@ -39,6 +46,7 @@ STAGE PLANS:
                   Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
           TableScan
             alias: y
+            filterExpr: key is not null (type: boolean)
             Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
               predicate: key is not null (type: boolean)
@@ -84,6 +92,7 @@ STAGE PLANS:
               Map-reduce partition columns: _col0 (type: string)
               Statistics: Num rows: 27 Data size: 210 Basic stats: COMPLETE Column stats: NONE
               value expressions: _col1 (type: bigint)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: count(VALUE._col0)
@@ -110,6 +119,7 @@ STAGE PLANS:
               value expressions: _col1 (type: bigint)
           TableScan
             alias: yy
+            filterExpr: key is not null (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
               predicate: key is not null (type: boolean)
@@ -192,6 +202,9 @@ FROM
 LEFT SEMI JOIN src yy
 ON xx.key=yy.key
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+PREHOOK: Input: default@src1
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT xx.key, xx.cnt
 FROM
@@ -199,6 +212,9 @@ FROM
 LEFT SEMI JOIN src yy
 ON xx.key=yy.key
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+POSTHOOK: Input: default@src1
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -209,6 +225,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: x
+            filterExpr: key is not null (type: boolean)
             Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
               predicate: key is not null (type: boolean)
@@ -224,6 +241,7 @@ STAGE PLANS:
                   Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
           TableScan
             alias: y
+            filterExpr: key is not null (type: boolean)
             Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
               predicate: key is not null (type: boolean)
@@ -239,6 +257,7 @@ STAGE PLANS:
                   Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
           TableScan
             alias: yy
+            filterExpr: key is not null (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
               predicate: key is not null (type: boolean)
@@ -362,6 +381,9 @@ LEFT SEMI JOIN
        y.key > 20) yy
 ON xx.key=yy.key
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+PREHOOK: Input: default@src1
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT xx.key, xx.value
 FROM
@@ -373,6 +395,9 @@ LEFT SEMI JOIN
        y.key > 20) yy
 ON xx.key=yy.key
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+POSTHOOK: Input: default@src1
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-2 is a root stage
   Stage-1 depends on stages: Stage-2
@@ -384,9 +409,10 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: x
+            filterExpr: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 20.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 20.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 20.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string)
@@ -399,9 +425,10 @@ STAGE PLANS:
                   Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
           TableScan
             alias: y
+            filterExpr: ((UDFToDouble(key) > 20.0D) and (UDFToDouble(key) < 200.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 20.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 20.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string)
@@ -438,9 +465,10 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: xx
+            filterExpr: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 20.0D)) (type: boolean)
             Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 20.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 20.0D)) (type: boolean)
               Statistics: Num rows: 2 Data size: 15 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string), value (type: string)
@@ -524,6 +552,9 @@ LEFT SEMI JOIN
        y.key > 20) yy
 ON xx.key=yy.key
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+PREHOOK: Input: default@src1
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT xx.key, xx.value
 FROM
@@ -535,6 +566,9 @@ LEFT SEMI JOIN
        y.key > 20) yy
 ON xx.key=yy.key
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+POSTHOOK: Input: default@src1
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -545,9 +579,10 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: xx
+            filterExpr: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 20.0D)) (type: boolean)
             Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 20.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 20.0D)) (type: boolean)
               Statistics: Num rows: 2 Data size: 15 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string), value (type: string)
@@ -561,9 +596,10 @@ STAGE PLANS:
                   value expressions: _col1 (type: string)
           TableScan
             alias: x
+            filterExpr: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 20.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 20.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 20.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string)
@@ -576,9 +612,10 @@ STAGE PLANS:
                   Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
           TableScan
             alias: y
+            filterExpr: ((UDFToDouble(key) > 20.0D) and (UDFToDouble(key) < 200.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 20.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 20.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string)
@@ -683,6 +720,8 @@ LEFT SEMI JOIN
  WHERE x.key < 200 AND x.key > 180) yy
 ON xx.key=yy.key
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT xx.key, xx.value
 FROM
@@ -693,6 +732,8 @@ LEFT SEMI JOIN
  WHERE x.key < 200 AND x.key > 180) yy
 ON xx.key=yy.key
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-2 is a root stage
   Stage-1 depends on stages: Stage-2
@@ -704,9 +745,10 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: x
+            filterExpr: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 180.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string)
@@ -719,9 +761,10 @@ STAGE PLANS:
                   Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
           TableScan
             alias: y
+            filterExpr: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 180.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string)
@@ -758,9 +801,10 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: xx
+            filterExpr: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 180.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string), value (type: string)
@@ -857,6 +901,8 @@ LEFT SEMI JOIN
  WHERE x.key < 200 AND x.key > 180) yy
 ON xx.key=yy.key
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT xx.key, xx.value
 FROM
@@ -867,6 +913,8 @@ LEFT SEMI JOIN
  WHERE x.key < 200 AND x.key > 180) yy
 ON xx.key=yy.key
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -877,9 +925,10 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: xx
+            filterExpr: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 180.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string), value (type: string)
@@ -893,9 +942,10 @@ STAGE PLANS:
                   value expressions: _col1 (type: string)
           TableScan
             alias: x
+            filterExpr: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 180.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string)
@@ -908,9 +958,10 @@ STAGE PLANS:
                   Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
           TableScan
             alias: y
+            filterExpr: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((UDFToDouble(key) < 200.0) and (UDFToDouble(key) > 180.0)) (type: boolean)
+              predicate: ((UDFToDouble(key) < 200.0D) and (UDFToDouble(key) > 180.0D)) (type: boolean)
               Statistics: Num rows: 55 Data size: 584 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: string)

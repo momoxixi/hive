@@ -5,9 +5,13 @@ POSTHOOK: type: DROPTABLE
 PREHOOK: query: EXPLAIN
 CREATE TABLE symlink_text_input_format (key STRING, value STRING) STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
 PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@symlink_text_input_format
 POSTHOOK: query: EXPLAIN
 CREATE TABLE symlink_text_input_format (key STRING, value STRING) STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
 POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@symlink_text_input_format
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
 
@@ -30,8 +34,12 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@symlink_text_input_format
 PREHOOK: query: EXPLAIN SELECT * FROM symlink_text_input_format order by key, value
 PREHOOK: type: QUERY
+PREHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN SELECT * FROM symlink_text_input_format order by key, value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -51,6 +59,7 @@ STAGE PLANS:
                 key expressions: _col0 (type: string), _col1 (type: string)
                 sort order: ++
                 Statistics: Num rows: 1 Data size: 720 Basic stats: COMPLETE Column stats: NONE
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: string), KEY.reducesinkkey1 (type: string)
@@ -96,8 +105,12 @@ POSTHOOK: Input: default@symlink_text_input_format
 8	28
 PREHOOK: query: EXPLAIN SELECT value FROM symlink_text_input_format order by value
 PREHOOK: type: QUERY
+PREHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN SELECT value FROM symlink_text_input_format order by value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -117,6 +130,7 @@ STAGE PLANS:
                 key expressions: _col0 (type: string)
                 sort order: +
                 Statistics: Num rows: 1 Data size: 720 Basic stats: COMPLETE Column stats: NONE
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: string)
@@ -162,8 +176,12 @@ POSTHOOK: Input: default@symlink_text_input_format
 28
 PREHOOK: query: EXPLAIN SELECT count(1) FROM symlink_text_input_format
 PREHOOK: type: QUERY
+PREHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN SELECT count(1) FROM symlink_text_input_format
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -186,6 +204,7 @@ STAGE PLANS:
                   sort order: 
                   Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
                   value expressions: _col0 (type: bigint)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: count(VALUE._col0)
@@ -233,8 +252,12 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@symlink_text_input_format
 PREHOOK: query: EXPLAIN SELECT * FROM symlink_text_input_format order by key, value
 PREHOOK: type: QUERY
+PREHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN SELECT * FROM symlink_text_input_format order by key, value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -254,6 +277,7 @@ STAGE PLANS:
                 key expressions: _col0 (type: string), _col1 (type: string)
                 sort order: ++
                 Statistics: Num rows: 1 Data size: 1000 Basic stats: COMPLETE Column stats: NONE
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: string), KEY.reducesinkkey1 (type: string)
@@ -302,8 +326,12 @@ POSTHOOK: Input: default@symlink_text_input_format
 8	28
 PREHOOK: query: EXPLAIN SELECT value FROM symlink_text_input_format order by value
 PREHOOK: type: QUERY
+PREHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN SELECT value FROM symlink_text_input_format order by value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -323,6 +351,7 @@ STAGE PLANS:
                 key expressions: _col0 (type: string)
                 sort order: +
                 Statistics: Num rows: 1 Data size: 1000 Basic stats: COMPLETE Column stats: NONE
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: string)
@@ -371,8 +400,12 @@ POSTHOOK: Input: default@symlink_text_input_format
 28
 PREHOOK: query: EXPLAIN SELECT count(1) FROM symlink_text_input_format
 PREHOOK: type: QUERY
+PREHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN SELECT count(1) FROM symlink_text_input_format
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@symlink_text_input_format
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -395,6 +428,7 @@ STAGE PLANS:
                   sort order: 
                   Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
                   value expressions: _col0 (type: bigint)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: count(VALUE._col0)

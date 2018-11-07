@@ -60,6 +60,8 @@ Table Type:         	EXTERNAL_TABLE
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"adrevenue\":\"true\",\"avgtimeonsite\":\"true\",\"ccode\":\"true\",\"desturl\":\"true\",\"lcode\":\"true\",\"skeyword\":\"true\",\"sourceip\":\"true\",\"useragent\":\"true\",\"visitdate\":\"true\"}}
 	EXTERNAL            	TRUE                
+	bucketing_version   	2                   
+	discover.partitions 	true                
 	numFiles            	0                   
 	numRows             	0                   
 	rawDataSize         	0                   
@@ -109,6 +111,8 @@ Retention:          	0
 Table Type:         	EXTERNAL_TABLE      	 
 Table Parameters:	 	 
 	EXTERNAL            	TRUE                
+	bucketing_version   	2                   
+	discover.partitions 	true                
 	numFiles            	1                   
 	numRows             	0                   
 	rawDataSize         	0                   
@@ -152,10 +156,16 @@ bitVector
 comment             	from deserializer   	 	 	 	 	 	 	 	 	 	 
 PREHOOK: query: explain
 analyze table UserVisits_web_text_none compute statistics for columns sourceIP, avgTimeOnSite, adRevenue
-PREHOOK: type: QUERY
+PREHOOK: type: ANALYZE_TABLE
+PREHOOK: Input: default@uservisits_web_text_none
+PREHOOK: Output: default@uservisits_web_text_none
+#### A masked pattern was here ####
 POSTHOOK: query: explain
 analyze table UserVisits_web_text_none compute statistics for columns sourceIP, avgTimeOnSite, adRevenue
-POSTHOOK: type: QUERY
+POSTHOOK: type: ANALYZE_TABLE
+POSTHOOK: Input: default@uservisits_web_text_none
+POSTHOOK: Output: default@uservisits_web_text_none
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
   Stage-1 depends on stages: Stage-0
@@ -204,10 +214,16 @@ STAGE PLANS:
 
 PREHOOK: query: explain extended
 analyze table UserVisits_web_text_none compute statistics for columns sourceIP, avgTimeOnSite, adRevenue
-PREHOOK: type: QUERY
+PREHOOK: type: ANALYZE_TABLE
+PREHOOK: Input: default@uservisits_web_text_none
+PREHOOK: Output: default@uservisits_web_text_none
+#### A masked pattern was here ####
 POSTHOOK: query: explain extended
 analyze table UserVisits_web_text_none compute statistics for columns sourceIP, avgTimeOnSite, adRevenue
-POSTHOOK: type: QUERY
+POSTHOOK: type: ANALYZE_TABLE
+POSTHOOK: Input: default@uservisits_web_text_none
+POSTHOOK: Output: default@uservisits_web_text_none
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
   Stage-1 depends on stages: Stage-0
@@ -248,10 +264,12 @@ STAGE PLANS:
             properties:
               EXTERNAL TRUE
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns sourceip,desturl,visitdate,adrevenue,useragent,ccode,lcode,skeyword,avgtimeonsite
               columns.comments 
               columns.types string:string:string:float:string:string:string:string:int
+              discover.partitions true
               field.delim |
 #### A masked pattern was here ####
               name default.uservisits_web_text_none
@@ -269,10 +287,12 @@ STAGE PLANS:
               properties:
                 EXTERNAL TRUE
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns sourceip,desturl,visitdate,adrevenue,useragent,ccode,lcode,skeyword,avgtimeonsite
                 columns.comments 
                 columns.types string:string:string:float:string:string:string:string:int
+                discover.partitions true
                 field.delim |
 #### A masked pattern was here ####
                 name default.uservisits_web_text_none
@@ -329,12 +349,12 @@ STAGE PLANS:
           Is Table Level Stats: true
 
 PREHOOK: query: analyze table UserVisits_web_text_none compute statistics for columns sourceIP, avgTimeOnSite, adRevenue
-PREHOOK: type: QUERY
+PREHOOK: type: ANALYZE_TABLE
 PREHOOK: Input: default@uservisits_web_text_none
 PREHOOK: Output: default@uservisits_web_text_none
 #### A masked pattern was here ####
 POSTHOOK: query: analyze table UserVisits_web_text_none compute statistics for columns sourceIP, avgTimeOnSite, adRevenue
-POSTHOOK: type: QUERY
+POSTHOOK: type: ANALYZE_TABLE
 POSTHOOK: Input: default@uservisits_web_text_none
 POSTHOOK: Output: default@uservisits_web_text_none
 #### A masked pattern was here ####
@@ -364,6 +384,8 @@ Table Type:         	EXTERNAL_TABLE
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"adRevenue\":\"true\",\"avgTimeOnSite\":\"true\",\"sourceIP\":\"true\"}}
 	EXTERNAL            	TRUE                
+	bucketing_version   	2                   
+	discover.partitions 	true                
 	numFiles            	1                   
 	numRows             	55                  
 	rawDataSize         	7005                
@@ -478,10 +500,16 @@ comment             	from deserializer
 COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"a\":\"true\",\"b\":\"true\",\"c\":\"true\",\"d\":\"true\",\"e\":\"true\"}}	 	 	 	 	 	 	 	 	 	 
 PREHOOK: query: explain
 analyze table empty_tab compute statistics for columns a,b,c,d,e
-PREHOOK: type: QUERY
+PREHOOK: type: ANALYZE_TABLE
+PREHOOK: Input: default@empty_tab
+PREHOOK: Output: default@empty_tab
+#### A masked pattern was here ####
 POSTHOOK: query: explain
 analyze table empty_tab compute statistics for columns a,b,c,d,e
-POSTHOOK: type: QUERY
+POSTHOOK: type: ANALYZE_TABLE
+POSTHOOK: Input: default@empty_tab
+POSTHOOK: Output: default@empty_tab
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
   Stage-1 depends on stages: Stage-0
@@ -529,12 +557,12 @@ STAGE PLANS:
           Table: default.empty_tab
 
 PREHOOK: query: analyze table empty_tab compute statistics for columns a,b,c,d,e
-PREHOOK: type: QUERY
+PREHOOK: type: ANALYZE_TABLE
 PREHOOK: Input: default@empty_tab
 PREHOOK: Output: default@empty_tab
 #### A masked pattern was here ####
 POSTHOOK: query: analyze table empty_tab compute statistics for columns a,b,c,d,e
-POSTHOOK: type: QUERY
+POSTHOOK: type: ANALYZE_TABLE
 POSTHOOK: Input: default@empty_tab
 POSTHOOK: Output: default@empty_tab
 #### A masked pattern was here ####
@@ -702,12 +730,12 @@ bitVector           	HL
 comment             	from deserializer   	 	 	 	 	 	 	 	 	 	 
 COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"adRevenue\":\"true\",\"avgTimeOnSite\":\"true\",\"sourceIP\":\"true\"}}	 	 	 	 	 	 	 	 	 	 
 PREHOOK: query: analyze table UserVisits_web_text_none compute statistics for columns sKeyword
-PREHOOK: type: QUERY
+PREHOOK: type: ANALYZE_TABLE
 PREHOOK: Input: test@uservisits_web_text_none
 #### A masked pattern was here ####
 PREHOOK: Output: test@uservisits_web_text_none
 POSTHOOK: query: analyze table UserVisits_web_text_none compute statistics for columns sKeyword
-POSTHOOK: type: QUERY
+POSTHOOK: type: ANALYZE_TABLE
 POSTHOOK: Input: test@uservisits_web_text_none
 #### A masked pattern was here ####
 POSTHOOK: Output: test@uservisits_web_text_none

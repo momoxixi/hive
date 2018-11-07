@@ -30,7 +30,21 @@ import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreTestUtils;
-import org.apache.hadoop.hive.ql.CommandNeedRetryException;
+import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.ForeignKeysRequest;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.api.NotNullConstraintsRequest;
+import org.apache.hadoop.hive.metastore.api.NotificationEventsCountRequest;
+import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.PrimaryKeysRequest;
+import org.apache.hadoop.hive.metastore.api.SQLForeignKey;
+import org.apache.hadoop.hive.metastore.api.SQLNotNullConstraint;
+import org.apache.hadoop.hive.metastore.api.SQLPrimaryKey;
+import org.apache.hadoop.hive.metastore.api.SQLUniqueConstraint;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.api.UniqueConstraintsRequest;
+import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
 import org.apache.hadoop.hive.ql.DriverFactory;
 import org.apache.hadoop.hive.ql.IDriver;
 import org.apache.hadoop.hive.ql.exec.repl.ReplDumpWork;
@@ -48,50 +62,52 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-class WarehouseInstance implements Closeable {
+public class WarehouseInstance implements Closeable {
   final String functionsRoot;
   private Logger logger;
   private IDriver driver;
   HiveConf hiveConf;
   MiniDFSCluster miniDFSCluster;
   private HiveMetaStoreClient client;
+  public final Path warehouseRoot;
 
   private static int uniqueIdentifier = 0;
 
   private final static String LISTENER_CLASS = DbNotificationListener.class.getCanonicalName();
 
-  WarehouseInstance(Logger logger, MiniDFSCluster cluster, Map<String, String> overridesForHiveConf)
-      throws Exception {
+  WarehouseInstance(Logger logger, MiniDFSCluster cluster, Map<String, String> overridesForHiveConf,
+      String keyNameForEncryptedZone) throws Exception {
     this.logger = logger;
     this.miniDFSCluster = cluster;
     assert miniDFSCluster.isClusterUp();
     assert miniDFSCluster.isDataNodeUp();
     DistributedFileSystem fs = miniDFSCluster.getFileSystem();
 
-    Path warehouseRoot = mkDir(fs, "/warehouse" + uniqueIdentifier);
+    warehouseRoot = mkDir(fs, "/warehouse" + uniqueIdentifier);
+    if (StringUtils.isNotEmpty(keyNameForEncryptedZone)) {
+      fs.createEncryptionZone(warehouseRoot, keyNameForEncryptedZone);
+    }
     Path cmRootPath = mkDir(fs, "/cmroot" + uniqueIdentifier);
     this.functionsRoot = mkDir(fs, "/functions" + uniqueIdentifier).toString();
     initialize(cmRootPath.toString(), warehouseRoot.toString(), overridesForHiveConf);
   }
 
-  WarehouseInstance(Logger logger, MiniDFSCluster cluster) throws Exception {
-    this(logger, cluster, new HashMap<String, String>() {{
-      put(HiveConf.ConfVars.HIVE_IN_TEST.varname, "true");
-    }});
+  WarehouseInstance(Logger logger, MiniDFSCluster cluster,
+      Map<String, String> overridesForHiveConf) throws Exception {
+    this(logger, cluster, overridesForHiveConf, null);
   }
 
   private void initialize(String cmRoot, String warehouseRoot,
-      Map<String, String> overridesForHiveConf)
-      throws Exception {
+      Map<String, String> overridesForHiveConf) throws Exception {
     hiveConf = new HiveConf(miniDFSCluster.getConfiguration(0), TestReplicationScenarios.class);
     for (Map.Entry<String, String> entry : overridesForHiveConf.entrySet()) {
       hiveConf.set(entry.getKey(), entry.getValue());
@@ -115,7 +131,6 @@ class WarehouseInstance implements Closeable {
     hiveConf.setBoolVar(HiveConf.ConfVars.FIRE_EVENTS_FOR_DML, true);
     hiveConf.setVar(HiveConf.ConfVars.REPLCMDIR, cmRoot);
     hiveConf.setVar(HiveConf.ConfVars.REPL_FUNCTIONS_ROOT_DIR, functionsRoot);
-    System.setProperty("datanucleus.mapping.Schema", "APP");
     hiveConf.setVar(HiveConf.ConfVars.METASTORECONNECTURLKEY,
         "jdbc:derby:memory:${test.tmp.dir}/APP;create=true");
     hiveConf.setVar(HiveConf.ConfVars.REPLDIR,
@@ -123,12 +138,16 @@ class WarehouseInstance implements Closeable {
     hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
     hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
     hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
-    hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+    hiveConf.setBoolVar(HiveConf.ConfVars.HIVESTATSAUTOGATHER, false);
+    if (!hiveConf.getVar(HiveConf.ConfVars.HIVE_TXN_MANAGER).equals("org.apache.hadoop.hive.ql.lockmgr.DbTxnManager")) {
+      hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+    }
+    hiveConf.set(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL.varname,
+            "org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore");
     System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.varname, " ");
     System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.varname, " ");
 
-    int metaStorePort = MetaStoreTestUtils.startMetaStore(hiveConf);
-    hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:" + metaStorePort);
+    MetaStoreTestUtils.startMetaStoreWithRetry(hiveConf, true);
 
     Path testPath = new Path(hiveWarehouseLocation);
     FileSystem testPathFileSystem = FileSystem.get(testPath.toUri(), hiveConf);
@@ -137,6 +156,10 @@ class WarehouseInstance implements Closeable {
     driver = DriverFactory.newDriver(hiveConf);
     SessionState.start(new CliSessionState(hiveConf));
     client = new HiveMetaStoreClient(hiveConf);
+
+    TxnDbUtil.cleanDb(hiveConf);
+    TxnDbUtil.prepDb(hiveConf);
+
     // change the value for the next instance.
     ++uniqueIdentifier;
   }
@@ -146,6 +169,10 @@ class WarehouseInstance implements Closeable {
     Path path = new Path(pathString);
     fs.mkdir(path, new FsPermission("777"));
     return PathBuilder.fullyQualifiedHDFSUri(path, fs);
+  }
+
+  public HiveConf getConf() {
+    return hiveConf;
   }
 
   private int next = 0;
@@ -160,21 +187,28 @@ class WarehouseInstance implements Closeable {
   private String row0Result(int colNum, boolean reuse) throws IOException {
     if (!reuse) {
       lastResults = new ArrayList<>();
-      try {
-        driver.getResults(lastResults);
-      } catch (CommandNeedRetryException e) {
-        e.printStackTrace();
-        throw new RuntimeException(e);
-      }
+      driver.getResults(lastResults);
     }
     // Split around the 'tab' character
     return (lastResults.get(0).split("\\t"))[colNum];
   }
 
-  WarehouseInstance run(String command) throws Throwable {
+  public WarehouseInstance run(String command) throws Throwable {
     CommandProcessorResponse ret = driver.run(command);
     if (ret.getException() != null) {
       throw ret.getException();
+    }
+    return this;
+  }
+
+  public CommandProcessorResponse runCommand(String command) throws Throwable {
+    return driver.run(command);
+  }
+
+  WarehouseInstance runFailure(String command) throws Throwable {
+    CommandProcessorResponse ret = driver.run(command);
+    if (ret.getException() == null) {
+      throw new RuntimeException("command execution passed for a invalid command" + command);
     }
     return this;
   }
@@ -201,11 +235,62 @@ class WarehouseInstance implements Closeable {
     return dump(dbName, lastReplicationId, Collections.emptyList());
   }
 
+  WarehouseInstance dumpFailure(String dbName, String lastReplicationId) throws Throwable {
+    String dumpCommand =
+            "REPL DUMP " + dbName + (lastReplicationId == null ? "" : " FROM " + lastReplicationId);
+    advanceDumpDir();
+    runFailure(dumpCommand);
+    return this;
+  }
+
   WarehouseInstance load(String replicatedDbName, String dumpLocation) throws Throwable {
     run("EXPLAIN REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "'");
     printOutput();
     run("REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "'");
     return this;
+  }
+
+  WarehouseInstance loadWithoutExplain(String replicatedDbName, String dumpLocation) throws Throwable {
+    run("REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "'");
+    return this;
+  }
+
+  WarehouseInstance load(String replicatedDbName, String dumpLocation, List<String> withClauseOptions)
+          throws Throwable {
+    String replLoadCmd = "REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "'";
+    if (!withClauseOptions.isEmpty()) {
+      replLoadCmd += " WITH (" + StringUtils.join(withClauseOptions, ",") + ")";
+    }
+    run("EXPLAIN " + replLoadCmd);
+    printOutput();
+    return run(replLoadCmd);
+  }
+
+  WarehouseInstance status(String replicatedDbName) throws Throwable {
+    String replStatusCmd = "REPL STATUS " + replicatedDbName;
+    return run(replStatusCmd);
+  }
+
+  WarehouseInstance status(String replicatedDbName, List<String> withClauseOptions) throws Throwable {
+    String replStatusCmd = "REPL STATUS " + replicatedDbName;
+    if (!withClauseOptions.isEmpty()) {
+      replStatusCmd += " WITH (" + StringUtils.join(withClauseOptions, ",") + ")";
+    }
+    return run(replStatusCmd);
+  }
+
+  WarehouseInstance loadFailure(String replicatedDbName, String dumpLocation) throws Throwable {
+    runFailure("REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "'");
+    return this;
+  }
+
+  WarehouseInstance loadFailure(String replicatedDbName, String dumpLocation, List<String> withClauseOptions)
+          throws Throwable {
+    String replLoadCmd = "REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "'";
+    if (!withClauseOptions.isEmpty()) {
+      replLoadCmd += " WITH (" + StringUtils.join(withClauseOptions, ",") + ")";
+    }
+    return runFailure(replLoadCmd);
   }
 
   WarehouseInstance verifyResult(String data) throws IOException {
@@ -232,7 +317,22 @@ class WarehouseInstance implements Closeable {
     List<String> lowerCaseData =
         Arrays.stream(data).map(String::toLowerCase).collect(Collectors.toList());
     assertEquals(data.length, filteredResults.size());
-    assertTrue(filteredResults.containsAll(lowerCaseData));
+    assertTrue(StringUtils.join(filteredResults, ",") + " does not contain all expected" + StringUtils
+            .join(lowerCaseData, ","), filteredResults.containsAll(lowerCaseData));
+    return this;
+  }
+
+  WarehouseInstance verifyFailure(String[] data) throws IOException {
+    List<String> results = getOutput();
+    logger.info("Expecting {}", StringUtils.join(data, ","));
+    logger.info("Got {}", results);
+    boolean dataMatched = (data.length == results.size());
+    if (dataMatched) {
+      for (int i = 0; i < data.length; i++) {
+        dataMatched &= data[i].toLowerCase().equals(results.get(i).toLowerCase());
+      }
+    }
+    assertFalse(dataMatched);
     return this;
   }
 
@@ -248,14 +348,9 @@ class WarehouseInstance implements Closeable {
     return this;
   }
 
-  List<String> getOutput() throws IOException {
+  public List<String> getOutput() throws IOException {
     List<String> results = new ArrayList<>();
-    try {
-      driver.getResults(results);
-    } catch (CommandNeedRetryException e) {
-      logger.warn(e.getMessage(), e);
-      throw new RuntimeException(e);
-    }
+    driver.getResults(results);
     return results;
   }
 
@@ -265,8 +360,77 @@ class WarehouseInstance implements Closeable {
     }
   }
 
+  public Database getDatabase(String dbName) throws Exception {
+    try {
+      return client.getDatabase(dbName);
+    } catch (NoSuchObjectException e) {
+      return null;
+    }
+  }
+
+  public List<String> getAllTables(String dbName) throws Exception {
+    return client.getAllTables(dbName);
+  }
+
+  public Table getTable(String dbName, String tableName) throws Exception {
+    try {
+      return client.getTable(dbName, tableName);
+    } catch (NoSuchObjectException e) {
+      return null;
+    }
+  }
+
+  public List<Partition> getAllPartitions(String dbName, String tableName) throws Exception {
+    try {
+      return client.listPartitions(dbName, tableName, Short.MAX_VALUE);
+    } catch (NoSuchObjectException e) {
+      return null;
+    }
+  }
+
+  public Partition getPartition(String dbName, String tableName, List<String> partValues) throws Exception {
+    try {
+      return client.getPartition(dbName, tableName, partValues);
+    } catch (NoSuchObjectException e) {
+      return null;
+    }
+  }
+
+  public List<SQLPrimaryKey> getPrimaryKeyList(String dbName, String tblName) throws Exception {
+    return client.getPrimaryKeys(new PrimaryKeysRequest(dbName, tblName));
+  }
+
+  public List<SQLForeignKey> getForeignKeyList(String dbName, String tblName) throws Exception {
+    return client.getForeignKeys(new ForeignKeysRequest(null, null, dbName, tblName));
+  }
+
+  public List<SQLUniqueConstraint> getUniqueConstraintList(String dbName, String tblName) throws Exception {
+    return client.getUniqueConstraints(new UniqueConstraintsRequest(Warehouse.DEFAULT_CATALOG_NAME, dbName, tblName));
+  }
+
+  public List<SQLNotNullConstraint> getNotNullConstraintList(String dbName, String tblName) throws Exception {
+    return client.getNotNullConstraints(
+            new NotNullConstraintsRequest(Warehouse.DEFAULT_CATALOG_NAME, dbName, tblName));
+  }
+
   ReplicationV1CompatRule getReplivationV1CompatRule(List<String> testsToSkip) {
     return new ReplicationV1CompatRule(client, hiveConf, testsToSkip);
+  }
+
+  // Test if the number of events between the given event ids and with the given database name are
+  // same as expected. toEventId = 0 is treated as unbounded. Same is the case with limit 0.
+  public void testEventCounts(String dbName, long fromEventId, Long toEventId, Integer limit,
+                               long expectedCount) throws Exception {
+    NotificationEventsCountRequest rqst = new NotificationEventsCountRequest(fromEventId, dbName);
+
+    if (toEventId != null) {
+      rqst.setToEventId(toEventId);
+    }
+    if (limit != null) {
+      rqst.setLimit(limit);
+    }
+
+    assertEquals(expectedCount, client.getNotificationEventsCount(rqst).getEventsCount());
   }
 
   @Override

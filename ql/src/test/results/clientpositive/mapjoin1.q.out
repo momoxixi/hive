@@ -24,9 +24,13 @@ POSTHOOK: Input: default@srcpart@ds=2008-04-09/hr=12
 PREHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN src b on a.key=b.key AND true limit 10
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN src b on a.key=b.key AND true limit 10
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-4 is a root stage
   Stage-3 depends on stages: Stage-4
@@ -111,9 +115,13 @@ POSTHOOK: Input: default@src
 PREHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN src b on a.key=b.key AND b.key * 10 < '1000' limit 10
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN src b on a.key=b.key AND b.key * 10 < '1000' limit 10
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-4 is a root stage
   Stage-3 depends on stages: Stage-4
@@ -138,7 +146,7 @@ STAGE PLANS:
               HashTable Sink Operator
                 filter predicates:
                   0 
-                  1 {((UDFToDouble(_col0) * 10.0) < 1000.0)}
+                  1 {((UDFToDouble(_col0) * 10.0D) < 1000.0D)}
                 keys:
                   0 _col0 (type: string)
                   1 _col0 (type: string)
@@ -158,7 +166,7 @@ STAGE PLANS:
                      Right Outer Join 0 to 1
                 filter predicates:
                   0 
-                  1 {((UDFToDouble(_col0) * 10.0) < 1000.0)}
+                  1 {((UDFToDouble(_col0) * 10.0D) < 1000.0D)}
                 keys:
                   0 _col0 (type: string)
                   1 _col0 (type: string)
@@ -205,10 +213,14 @@ PREHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN
     (select key, named_struct('key', key, 'value', value) as kv from src) b on a.key=b.key AND b.kv.key > 200 limit 10
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN
     (select key, named_struct('key', key, 'value', value) as kv from src) b on a.key=b.key AND b.kv.key > 200 limit 10
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-4 is a root stage
   Stage-3 depends on stages: Stage-4
@@ -233,7 +245,7 @@ STAGE PLANS:
               HashTable Sink Operator
                 filter predicates:
                   0 
-                  1 {(UDFToDouble(_col1.key) > 200.0)}
+                  1 {(UDFToDouble(_col1.key) > 200.0D)}
                 keys:
                   0 _col0 (type: string)
                   1 _col0 (type: string)
@@ -253,7 +265,7 @@ STAGE PLANS:
                      Right Outer Join 0 to 1
                 filter predicates:
                   0 
-                  1 {(UDFToDouble(_col1.key) > 200.0)}
+                  1 {(UDFToDouble(_col1.key) > 200.0D)}
                 keys:
                   0 _col0 (type: string)
                   1 _col0 (type: string)
@@ -301,9 +313,13 @@ NULL	NULL	165	{"key":"165","value":"val_165"}
 PREHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN src b on a.key=b.key AND true limit 10
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN src b on a.key=b.key AND true limit 10
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-4 is a root stage
   Stage-3 depends on stages: Stage-4
@@ -388,9 +404,13 @@ POSTHOOK: Input: default@src
 PREHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN src b on a.key=b.key AND b.key * 10 < '1000' limit 10
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN src b on a.key=b.key AND b.key * 10 < '1000' limit 10
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-4 is a root stage
   Stage-3 depends on stages: Stage-4
@@ -415,7 +435,7 @@ STAGE PLANS:
               HashTable Sink Operator
                 filter predicates:
                   0 
-                  1 {((UDFToDouble(_col0) * 10.0) < 1000.0)}
+                  1 {((UDFToDouble(_col0) * 10.0D) < 1000.0D)}
                 keys:
                   0 _col0 (type: string)
                   1 _col0 (type: string)
@@ -435,7 +455,7 @@ STAGE PLANS:
                      Right Outer Join 0 to 1
                 filter predicates:
                   0 
-                  1 {((UDFToDouble(_col0) * 10.0) < 1000.0)}
+                  1 {((UDFToDouble(_col0) * 10.0D) < 1000.0D)}
                 keys:
                   0 _col0 (type: string)
                   1 _col0 (type: string)
@@ -482,10 +502,14 @@ PREHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN
     (select key, named_struct('key', key, 'value', value) as kv from src) b on a.key=b.key AND b.kv.key > 200 limit 10
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: EXPLAIN
 SELECT /*+ MAPJOIN(a) */ * FROM src a RIGHT OUTER JOIN
     (select key, named_struct('key', key, 'value', value) as kv from src) b on a.key=b.key AND b.kv.key > 200 limit 10
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-4 is a root stage
   Stage-3 depends on stages: Stage-4
@@ -510,7 +534,7 @@ STAGE PLANS:
               HashTable Sink Operator
                 filter predicates:
                   0 
-                  1 {(UDFToDouble(_col1.key) > 200.0)}
+                  1 {(UDFToDouble(_col1.key) > 200.0D)}
                 keys:
                   0 _col0 (type: string)
                   1 _col0 (type: string)
@@ -530,7 +554,7 @@ STAGE PLANS:
                      Right Outer Join 0 to 1
                 filter predicates:
                   0 
-                  1 {(UDFToDouble(_col1.key) > 200.0)}
+                  1 {(UDFToDouble(_col1.key) > 200.0D)}
                 keys:
                   0 _col0 (type: string)
                   1 _col0 (type: string)

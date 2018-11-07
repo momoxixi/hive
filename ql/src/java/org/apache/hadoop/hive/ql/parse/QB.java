@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -421,6 +421,10 @@ public class QB {
 
   public boolean isView() {
     return viewDesc != null && !viewDesc.isMaterialized();
+  }
+
+  public boolean isMultiDestQuery() {
+    return qbp != null && qbp.getClauseNamesForDest() != null && qbp.getClauseNamesForDest().size() > 1;
   }
 
   public HashMap<String, Table> getViewToTabSchema() {

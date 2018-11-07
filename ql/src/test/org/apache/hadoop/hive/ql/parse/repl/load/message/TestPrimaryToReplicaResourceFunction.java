@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -83,6 +83,7 @@ public class TestPrimaryToReplicaResourceFunction {
   public void createDestinationPath() throws IOException, SemanticException, URISyntaxException {
     mockStatic(FileSystem.class);
     when(FileSystem.get(any(Configuration.class))).thenReturn(mockFs);
+    when(FileSystem.get(any(URI.class), any(Configuration.class))).thenReturn(mockFs);
     when(mockFs.getScheme()).thenReturn("hdfs");
     when(mockFs.getUri()).thenReturn(new URI("hdfs", "somehost:9000", null, null, null));
     mockStatic(System.class);
@@ -91,7 +92,7 @@ public class TestPrimaryToReplicaResourceFunction {
     mockStatic(ReplCopyTask.class);
     Task mock = mock(Task.class);
     when(ReplCopyTask.getLoadCopyTask(any(ReplicationSpec.class), any(Path.class), any(Path.class),
-        any(HiveConf.class))).thenReturn(mock);
+        any(HiveConf.class), any(Boolean.class), any(Boolean.class))).thenReturn(mock);
 
     ResourceUri resourceUri = function.destinationResourceUri(new ResourceUri(ResourceType.JAR,
         "hdfs://localhost:9000/user/someplace/ab.jar#e094828883"));

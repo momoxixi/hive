@@ -1,7 +1,13 @@
 PREHOOK: query: explain extended select key from src
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: explain extended select key from src
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
+OPTIMIZED SQL: SELECT `key`
+FROM `default`.`src`
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
 
@@ -22,8 +28,14 @@ STAGE PLANS:
 
 PREHOOK: query: explain extended select a.key from src a
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: explain extended select a.key from src a
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
+OPTIMIZED SQL: SELECT `key`
+FROM `default`.`src`
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
 
@@ -44,8 +56,12 @@ STAGE PLANS:
 
 PREHOOK: query: explain extended select a.key from src tablesample(1 percent) a
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: explain extended select a.key from src tablesample(1 percent) a
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -84,6 +100,7 @@ STAGE PLANS:
                 TotalFiles: 1
                 GatherStats: false
                 MultiFileSpray: false
+      Execution mode: vectorized
       Split Sample:
         a 
             percentage: 1.0
@@ -99,6 +116,7 @@ STAGE PLANS:
             properties:
               COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 'default','default'
@@ -120,6 +138,7 @@ STAGE PLANS:
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 'default','default'
@@ -148,8 +167,14 @@ STAGE PLANS:
 
 PREHOOK: query: explain extended select key from src ('user.defined.key'='some.value')
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: explain extended select key from src ('user.defined.key'='some.value')
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
+OPTIMIZED SQL: SELECT `key`
+FROM `default`.`src`
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
 
@@ -170,8 +195,12 @@ STAGE PLANS:
 
 PREHOOK: query: explain extended select key from src ('user.defined.key'='some.value') tablesample(1 percent)
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: explain extended select key from src ('user.defined.key'='some.value') tablesample(1 percent)
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -212,6 +241,7 @@ STAGE PLANS:
                 TotalFiles: 1
                 GatherStats: false
                 MultiFileSpray: false
+      Execution mode: vectorized
       Split Sample:
         src 
             percentage: 1.0
@@ -227,6 +257,7 @@ STAGE PLANS:
             properties:
               COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 'default','default'
@@ -249,6 +280,7 @@ STAGE PLANS:
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 'default','default'
@@ -278,8 +310,14 @@ STAGE PLANS:
 
 PREHOOK: query: explain extended select a.key from src ('user.defined.key'='some.value') a
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: explain extended select a.key from src ('user.defined.key'='some.value') a
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
+OPTIMIZED SQL: SELECT `key`
+FROM `default`.`src`
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
 
@@ -300,8 +338,12 @@ STAGE PLANS:
 
 PREHOOK: query: explain extended select a.key from src ('user.defined.key'='some.value') tablesample(1 percent) a
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
 POSTHOOK: query: explain extended select a.key from src ('user.defined.key'='some.value') tablesample(1 percent) a
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -342,6 +384,7 @@ STAGE PLANS:
                 TotalFiles: 1
                 GatherStats: false
                 MultiFileSpray: false
+      Execution mode: vectorized
       Split Sample:
         a 
             percentage: 1.0
@@ -357,6 +400,7 @@ STAGE PLANS:
             properties:
               COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 'default','default'
@@ -379,6 +423,7 @@ STAGE PLANS:
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 'default','default'

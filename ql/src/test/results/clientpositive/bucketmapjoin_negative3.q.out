@@ -1,10 +1,10 @@
-PREHOOK: query: drop table test1
+PREHOOK: query: drop table test1_n11
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table test1
+POSTHOOK: query: drop table test1_n11
 POSTHOOK: type: DROPTABLE
-PREHOOK: query: drop table test2
+PREHOOK: query: drop table test2_n7
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table test2
+POSTHOOK: query: drop table test2_n7
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: drop table test3
 PREHOOK: type: DROPTABLE
@@ -14,22 +14,22 @@ PREHOOK: query: drop table test4
 PREHOOK: type: DROPTABLE
 POSTHOOK: query: drop table test4
 POSTHOOK: type: DROPTABLE
-PREHOOK: query: create table test1 (key string, value string) clustered by (key) sorted by (key) into 3 buckets
+PREHOOK: query: create table test1_n11 (key string, value string) clustered by (key) sorted by (key) into 3 buckets
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
-PREHOOK: Output: default@test1
-POSTHOOK: query: create table test1 (key string, value string) clustered by (key) sorted by (key) into 3 buckets
+PREHOOK: Output: default@test1_n11
+POSTHOOK: query: create table test1_n11 (key string, value string) clustered by (key) sorted by (key) into 3 buckets
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
-POSTHOOK: Output: default@test1
-PREHOOK: query: create table test2 (key string, value string) clustered by (value) sorted by (value) into 3 buckets
+POSTHOOK: Output: default@test1_n11
+PREHOOK: query: create table test2_n7 (key string, value string) clustered by (value) sorted by (value) into 3 buckets
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
-PREHOOK: Output: default@test2
-POSTHOOK: query: create table test2 (key string, value string) clustered by (value) sorted by (value) into 3 buckets
+PREHOOK: Output: default@test2_n7
+POSTHOOK: query: create table test2_n7 (key string, value string) clustered by (value) sorted by (value) into 3 buckets
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
-POSTHOOK: Output: default@test2
+POSTHOOK: Output: default@test2_n7
 PREHOOK: query: create table test3 (key string, value string) clustered by (key, value) sorted by (key, value) into 3 buckets
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
@@ -46,54 +46,54 @@ POSTHOOK: query: create table test4 (key string, value string) clustered by (val
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@test4
-PREHOOK: query: load data local inpath '../../data/files/bmj/000000_0' INTO TABLE test1
+PREHOOK: query: load data local inpath '../../data/files/bmj/000000_0' INTO TABLE test1_n11
 PREHOOK: type: LOAD
 #### A masked pattern was here ####
-PREHOOK: Output: default@test1
-POSTHOOK: query: load data local inpath '../../data/files/bmj/000000_0' INTO TABLE test1
+PREHOOK: Output: default@test1_n11
+POSTHOOK: query: load data local inpath '../../data/files/bmj/000000_0' INTO TABLE test1_n11
 POSTHOOK: type: LOAD
 #### A masked pattern was here ####
-POSTHOOK: Output: default@test1
-PREHOOK: query: load data local inpath '../../data/files/bmj/000001_0' INTO TABLE test1
+POSTHOOK: Output: default@test1_n11
+PREHOOK: query: load data local inpath '../../data/files/bmj/000001_0' INTO TABLE test1_n11
 PREHOOK: type: LOAD
 #### A masked pattern was here ####
-PREHOOK: Output: default@test1
-POSTHOOK: query: load data local inpath '../../data/files/bmj/000001_0' INTO TABLE test1
+PREHOOK: Output: default@test1_n11
+POSTHOOK: query: load data local inpath '../../data/files/bmj/000001_0' INTO TABLE test1_n11
 POSTHOOK: type: LOAD
 #### A masked pattern was here ####
-POSTHOOK: Output: default@test1
-PREHOOK: query: load data local inpath '../../data/files/bmj/000002_0' INTO TABLE test1
+POSTHOOK: Output: default@test1_n11
+PREHOOK: query: load data local inpath '../../data/files/bmj/000002_0' INTO TABLE test1_n11
 PREHOOK: type: LOAD
 #### A masked pattern was here ####
-PREHOOK: Output: default@test1
-POSTHOOK: query: load data local inpath '../../data/files/bmj/000002_0' INTO TABLE test1
+PREHOOK: Output: default@test1_n11
+POSTHOOK: query: load data local inpath '../../data/files/bmj/000002_0' INTO TABLE test1_n11
 POSTHOOK: type: LOAD
 #### A masked pattern was here ####
-POSTHOOK: Output: default@test1
-PREHOOK: query: load data local inpath '../../data/files/bmj/000000_0' INTO TABLE test2
+POSTHOOK: Output: default@test1_n11
+PREHOOK: query: load data local inpath '../../data/files/bmj/000000_0' INTO TABLE test2_n7
 PREHOOK: type: LOAD
 #### A masked pattern was here ####
-PREHOOK: Output: default@test2
-POSTHOOK: query: load data local inpath '../../data/files/bmj/000000_0' INTO TABLE test2
+PREHOOK: Output: default@test2_n7
+POSTHOOK: query: load data local inpath '../../data/files/bmj/000000_0' INTO TABLE test2_n7
 POSTHOOK: type: LOAD
 #### A masked pattern was here ####
-POSTHOOK: Output: default@test2
-PREHOOK: query: load data local inpath '../../data/files/bmj/000001_0' INTO TABLE test2
+POSTHOOK: Output: default@test2_n7
+PREHOOK: query: load data local inpath '../../data/files/bmj/000001_0' INTO TABLE test2_n7
 PREHOOK: type: LOAD
 #### A masked pattern was here ####
-PREHOOK: Output: default@test2
-POSTHOOK: query: load data local inpath '../../data/files/bmj/000001_0' INTO TABLE test2
+PREHOOK: Output: default@test2_n7
+POSTHOOK: query: load data local inpath '../../data/files/bmj/000001_0' INTO TABLE test2_n7
 POSTHOOK: type: LOAD
 #### A masked pattern was here ####
-POSTHOOK: Output: default@test2
-PREHOOK: query: load data local inpath '../../data/files/bmj/000002_0' INTO TABLE test2
+POSTHOOK: Output: default@test2_n7
+PREHOOK: query: load data local inpath '../../data/files/bmj/000002_0' INTO TABLE test2_n7
 PREHOOK: type: LOAD
 #### A masked pattern was here ####
-PREHOOK: Output: default@test2
-POSTHOOK: query: load data local inpath '../../data/files/bmj/000002_0' INTO TABLE test2
+PREHOOK: Output: default@test2_n7
+POSTHOOK: query: load data local inpath '../../data/files/bmj/000002_0' INTO TABLE test2_n7
 POSTHOOK: type: LOAD
 #### A masked pattern was here ####
-POSTHOOK: Output: default@test2
+POSTHOOK: Output: default@test2_n7
 PREHOOK: query: load data local inpath '../../data/files/bmj/000000_0' INTO TABLE test3
 PREHOOK: type: LOAD
 #### A masked pattern was here ####
@@ -142,10 +142,14 @@ POSTHOOK: query: load data local inpath '../../data/files/bmj/000002_0' INTO TAB
 POSTHOOK: type: LOAD
 #### A masked pattern was here ####
 POSTHOOK: Output: default@test4
-PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1 L join test1 R on L.key=R.key AND L.value=R.value
+PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1_n11 L join test1_n11 R on L.key=R.key AND L.value=R.value
 PREHOOK: type: QUERY
-POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1 L join test1 R on L.key=R.key AND L.value=R.value
+PREHOOK: Input: default@test1_n11
+#### A masked pattern was here ####
+POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1_n11 L join test1_n11 R on L.key=R.key AND L.value=R.value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@test1_n11
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-3 is a root stage
   Stage-1 depends on stages: Stage-3
@@ -162,6 +166,7 @@ STAGE PLANS:
         r 
           TableScan
             alias: r
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -186,6 +191,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: l
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -228,6 +234,7 @@ STAGE PLANS:
                     TotalFiles: 1
                     GatherStats: false
                     MultiFileSpray: false
+      Execution mode: vectorized
       Local Work:
         Map Reduce Local Work
       Path -> Alias:
@@ -235,23 +242,24 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: test1
+            base file name: test1_n11
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 3
               bucket_field_name key
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types string:string
 #### A masked pattern was here ####
-              name default.test1
+              name default.test1_n11
               numFiles 3
               numRows 0
               rawDataSize 0
-              serialization.ddl struct test1 { string key, string value}
+              serialization.ddl struct test1_n11 { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               totalSize 4200
@@ -264,25 +272,26 @@ STAGE PLANS:
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 3
                 bucket_field_name key
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types string:string
 #### A masked pattern was here ####
-                name default.test1
+                name default.test1_n11
                 numFiles 3
                 numRows 0
                 rawDataSize 0
-                serialization.ddl struct test1 { string key, string value}
+                serialization.ddl struct test1_n11 { string key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 totalSize 4200
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              name: default.test1
-            name: default.test1
+              name: default.test1_n11
+            name: default.test1_n11
       Truncated Path -> Alias:
-        /test1 [l]
+        /test1_n11 [l]
 
   Stage: Stage-0
     Fetch Operator
@@ -290,10 +299,14 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2 L join test2 R on L.key=R.key AND L.value=R.value
+PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2_n7 L join test2_n7 R on L.key=R.key AND L.value=R.value
 PREHOOK: type: QUERY
-POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2 L join test2 R on L.key=R.key AND L.value=R.value
+PREHOOK: Input: default@test2_n7
+#### A masked pattern was here ####
+POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2_n7 L join test2_n7 R on L.key=R.key AND L.value=R.value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@test2_n7
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-3 is a root stage
   Stage-1 depends on stages: Stage-3
@@ -310,6 +323,7 @@ STAGE PLANS:
         r 
           TableScan
             alias: r
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -334,6 +348,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: l
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -376,6 +391,7 @@ STAGE PLANS:
                     TotalFiles: 1
                     GatherStats: false
                     MultiFileSpray: false
+      Execution mode: vectorized
       Local Work:
         Map Reduce Local Work
       Path -> Alias:
@@ -383,23 +399,24 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: test2
+            base file name: test2_n7
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 3
               bucket_field_name value
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types string:string
 #### A masked pattern was here ####
-              name default.test2
+              name default.test2_n7
               numFiles 3
               numRows 0
               rawDataSize 0
-              serialization.ddl struct test2 { string key, string value}
+              serialization.ddl struct test2_n7 { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               totalSize 4200
@@ -412,25 +429,26 @@ STAGE PLANS:
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 3
                 bucket_field_name value
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types string:string
 #### A masked pattern was here ####
-                name default.test2
+                name default.test2_n7
                 numFiles 3
                 numRows 0
                 rawDataSize 0
-                serialization.ddl struct test2 { string key, string value}
+                serialization.ddl struct test2_n7 { string key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 totalSize 4200
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              name: default.test2
-            name: default.test2
+              name: default.test2_n7
+            name: default.test2_n7
       Truncated Path -> Alias:
-        /test2 [l]
+        /test2_n7 [l]
 
   Stage: Stage-0
     Fetch Operator
@@ -438,10 +456,14 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1 L join test1 R on L.key+L.key=R.key
+PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1_n11 L join test1_n11 R on L.key+L.key=R.key
 PREHOOK: type: QUERY
-POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1 L join test1 R on L.key+L.key=R.key
+PREHOOK: Input: default@test1_n11
+#### A masked pattern was here ####
+POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1_n11 L join test1_n11 R on L.key+L.key=R.key
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@test1_n11
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-3 is a root stage
   Stage-1 depends on stages: Stage-3
@@ -458,6 +480,7 @@ STAGE PLANS:
         r 
           TableScan
             alias: r
+            filterExpr: UDFToDouble(key) is not null (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -475,6 +498,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: l
+            filterExpr: (key + key) is not null (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -516,6 +540,7 @@ STAGE PLANS:
                     TotalFiles: 1
                     GatherStats: false
                     MultiFileSpray: false
+      Execution mode: vectorized
       Local Work:
         Map Reduce Local Work
       Path -> Alias:
@@ -523,23 +548,24 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: test1
+            base file name: test1_n11
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 3
               bucket_field_name key
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types string:string
 #### A masked pattern was here ####
-              name default.test1
+              name default.test1_n11
               numFiles 3
               numRows 0
               rawDataSize 0
-              serialization.ddl struct test1 { string key, string value}
+              serialization.ddl struct test1_n11 { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               totalSize 4200
@@ -552,25 +578,26 @@ STAGE PLANS:
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 3
                 bucket_field_name key
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types string:string
 #### A masked pattern was here ####
-                name default.test1
+                name default.test1_n11
                 numFiles 3
                 numRows 0
                 rawDataSize 0
-                serialization.ddl struct test1 { string key, string value}
+                serialization.ddl struct test1_n11 { string key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 totalSize 4200
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              name: default.test1
-            name: default.test1
+              name: default.test1_n11
+            name: default.test1_n11
       Truncated Path -> Alias:
-        /test1 [l]
+        /test1_n11 [l]
 
   Stage: Stage-0
     Fetch Operator
@@ -578,10 +605,16 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1 L join test2 R on L.key=R.key AND L.value=R.value
+PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1_n11 L join test2_n7 R on L.key=R.key AND L.value=R.value
 PREHOOK: type: QUERY
-POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1 L join test2 R on L.key=R.key AND L.value=R.value
+PREHOOK: Input: default@test1_n11
+PREHOOK: Input: default@test2_n7
+#### A masked pattern was here ####
+POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1_n11 L join test2_n7 R on L.key=R.key AND L.value=R.value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@test1_n11
+POSTHOOK: Input: default@test2_n7
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-3 is a root stage
   Stage-1 depends on stages: Stage-3
@@ -598,6 +631,7 @@ STAGE PLANS:
         r 
           TableScan
             alias: r
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -615,6 +649,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: l
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -656,6 +691,7 @@ STAGE PLANS:
                     TotalFiles: 1
                     GatherStats: false
                     MultiFileSpray: false
+      Execution mode: vectorized
       Local Work:
         Map Reduce Local Work
       Path -> Alias:
@@ -663,23 +699,24 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: test1
+            base file name: test1_n11
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 3
               bucket_field_name key
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types string:string
 #### A masked pattern was here ####
-              name default.test1
+              name default.test1_n11
               numFiles 3
               numRows 0
               rawDataSize 0
-              serialization.ddl struct test1 { string key, string value}
+              serialization.ddl struct test1_n11 { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               totalSize 4200
@@ -692,25 +729,26 @@ STAGE PLANS:
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 3
                 bucket_field_name key
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types string:string
 #### A masked pattern was here ####
-                name default.test1
+                name default.test1_n11
                 numFiles 3
                 numRows 0
                 rawDataSize 0
-                serialization.ddl struct test1 { string key, string value}
+                serialization.ddl struct test1_n11 { string key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 totalSize 4200
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              name: default.test1
-            name: default.test1
+              name: default.test1_n11
+            name: default.test1_n11
       Truncated Path -> Alias:
-        /test1 [l]
+        /test1_n11 [l]
 
   Stage: Stage-0
     Fetch Operator
@@ -718,10 +756,16 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1 L join test3 R on L.key=R.key AND L.value=R.value
+PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1_n11 L join test3 R on L.key=R.key AND L.value=R.value
 PREHOOK: type: QUERY
-POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1 L join test3 R on L.key=R.key AND L.value=R.value
+PREHOOK: Input: default@test1_n11
+PREHOOK: Input: default@test3
+#### A masked pattern was here ####
+POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1_n11 L join test3 R on L.key=R.key AND L.value=R.value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@test1_n11
+POSTHOOK: Input: default@test3
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-3 is a root stage
   Stage-1 depends on stages: Stage-3
@@ -738,6 +782,7 @@ STAGE PLANS:
         r 
           TableScan
             alias: r
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -755,6 +800,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: l
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -796,6 +842,7 @@ STAGE PLANS:
                     TotalFiles: 1
                     GatherStats: false
                     MultiFileSpray: false
+      Execution mode: vectorized
       Local Work:
         Map Reduce Local Work
       Path -> Alias:
@@ -803,23 +850,24 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: test1
+            base file name: test1_n11
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 3
               bucket_field_name key
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types string:string
 #### A masked pattern was here ####
-              name default.test1
+              name default.test1_n11
               numFiles 3
               numRows 0
               rawDataSize 0
-              serialization.ddl struct test1 { string key, string value}
+              serialization.ddl struct test1_n11 { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               totalSize 4200
@@ -832,25 +880,26 @@ STAGE PLANS:
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 3
                 bucket_field_name key
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types string:string
 #### A masked pattern was here ####
-                name default.test1
+                name default.test1_n11
                 numFiles 3
                 numRows 0
                 rawDataSize 0
-                serialization.ddl struct test1 { string key, string value}
+                serialization.ddl struct test1_n11 { string key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 totalSize 4200
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              name: default.test1
-            name: default.test1
+              name: default.test1_n11
+            name: default.test1_n11
       Truncated Path -> Alias:
-        /test1 [l]
+        /test1_n11 [l]
 
   Stage: Stage-0
     Fetch Operator
@@ -858,10 +907,16 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1 L join test4 R on L.key=R.key AND L.value=R.value
+PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1_n11 L join test4 R on L.key=R.key AND L.value=R.value
 PREHOOK: type: QUERY
-POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1 L join test4 R on L.key=R.key AND L.value=R.value
+PREHOOK: Input: default@test1_n11
+PREHOOK: Input: default@test4
+#### A masked pattern was here ####
+POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test1_n11 L join test4 R on L.key=R.key AND L.value=R.value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@test1_n11
+POSTHOOK: Input: default@test4
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-3 is a root stage
   Stage-1 depends on stages: Stage-3
@@ -878,6 +933,7 @@ STAGE PLANS:
         r 
           TableScan
             alias: r
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -895,6 +951,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: l
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -936,6 +993,7 @@ STAGE PLANS:
                     TotalFiles: 1
                     GatherStats: false
                     MultiFileSpray: false
+      Execution mode: vectorized
       Local Work:
         Map Reduce Local Work
       Path -> Alias:
@@ -943,23 +1001,24 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: test1
+            base file name: test1_n11
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 3
               bucket_field_name key
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types string:string
 #### A masked pattern was here ####
-              name default.test1
+              name default.test1_n11
               numFiles 3
               numRows 0
               rawDataSize 0
-              serialization.ddl struct test1 { string key, string value}
+              serialization.ddl struct test1_n11 { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               totalSize 4200
@@ -972,25 +1031,26 @@ STAGE PLANS:
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 3
                 bucket_field_name key
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types string:string
 #### A masked pattern was here ####
-                name default.test1
+                name default.test1_n11
                 numFiles 3
                 numRows 0
                 rawDataSize 0
-                serialization.ddl struct test1 { string key, string value}
+                serialization.ddl struct test1_n11 { string key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 totalSize 4200
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              name: default.test1
-            name: default.test1
+              name: default.test1_n11
+            name: default.test1_n11
       Truncated Path -> Alias:
-        /test1 [l]
+        /test1_n11 [l]
 
   Stage: Stage-0
     Fetch Operator
@@ -998,10 +1058,16 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2 L join test3 R on L.key=R.key AND L.value=R.value
+PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2_n7 L join test3 R on L.key=R.key AND L.value=R.value
 PREHOOK: type: QUERY
-POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2 L join test3 R on L.key=R.key AND L.value=R.value
+PREHOOK: Input: default@test2_n7
+PREHOOK: Input: default@test3
+#### A masked pattern was here ####
+POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2_n7 L join test3 R on L.key=R.key AND L.value=R.value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@test2_n7
+POSTHOOK: Input: default@test3
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-3 is a root stage
   Stage-1 depends on stages: Stage-3
@@ -1018,6 +1084,7 @@ STAGE PLANS:
         r 
           TableScan
             alias: r
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -1035,6 +1102,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: l
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -1076,6 +1144,7 @@ STAGE PLANS:
                     TotalFiles: 1
                     GatherStats: false
                     MultiFileSpray: false
+      Execution mode: vectorized
       Local Work:
         Map Reduce Local Work
       Path -> Alias:
@@ -1083,23 +1152,24 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: test2
+            base file name: test2_n7
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 3
               bucket_field_name value
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types string:string
 #### A masked pattern was here ####
-              name default.test2
+              name default.test2_n7
               numFiles 3
               numRows 0
               rawDataSize 0
-              serialization.ddl struct test2 { string key, string value}
+              serialization.ddl struct test2_n7 { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               totalSize 4200
@@ -1112,25 +1182,26 @@ STAGE PLANS:
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 3
                 bucket_field_name value
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types string:string
 #### A masked pattern was here ####
-                name default.test2
+                name default.test2_n7
                 numFiles 3
                 numRows 0
                 rawDataSize 0
-                serialization.ddl struct test2 { string key, string value}
+                serialization.ddl struct test2_n7 { string key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 totalSize 4200
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              name: default.test2
-            name: default.test2
+              name: default.test2_n7
+            name: default.test2_n7
       Truncated Path -> Alias:
-        /test2 [l]
+        /test2_n7 [l]
 
   Stage: Stage-0
     Fetch Operator
@@ -1138,10 +1209,16 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2 L join test4 R on L.key=R.key AND L.value=R.value
+PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2_n7 L join test4 R on L.key=R.key AND L.value=R.value
 PREHOOK: type: QUERY
-POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2 L join test4 R on L.key=R.key AND L.value=R.value
+PREHOOK: Input: default@test2_n7
+PREHOOK: Input: default@test4
+#### A masked pattern was here ####
+POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test2_n7 L join test4 R on L.key=R.key AND L.value=R.value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@test2_n7
+POSTHOOK: Input: default@test4
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-3 is a root stage
   Stage-1 depends on stages: Stage-3
@@ -1158,6 +1235,7 @@ STAGE PLANS:
         r 
           TableScan
             alias: r
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -1175,6 +1253,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: l
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -1216,6 +1295,7 @@ STAGE PLANS:
                     TotalFiles: 1
                     GatherStats: false
                     MultiFileSpray: false
+      Execution mode: vectorized
       Local Work:
         Map Reduce Local Work
       Path -> Alias:
@@ -1223,23 +1303,24 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: test2
+            base file name: test2_n7
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 3
               bucket_field_name value
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
               columns.types string:string
 #### A masked pattern was here ####
-              name default.test2
+              name default.test2_n7
               numFiles 3
               numRows 0
               rawDataSize 0
-              serialization.ddl struct test2 { string key, string value}
+              serialization.ddl struct test2_n7 { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               totalSize 4200
@@ -1252,25 +1333,26 @@ STAGE PLANS:
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 3
                 bucket_field_name value
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 
                 columns.types string:string
 #### A masked pattern was here ####
-                name default.test2
+                name default.test2_n7
                 numFiles 3
                 numRows 0
                 rawDataSize 0
-                serialization.ddl struct test2 { string key, string value}
+                serialization.ddl struct test2_n7 { string key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 totalSize 4200
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              name: default.test2
-            name: default.test2
+              name: default.test2_n7
+            name: default.test2_n7
       Truncated Path -> Alias:
-        /test2 [l]
+        /test2_n7 [l]
 
   Stage: Stage-0
     Fetch Operator
@@ -1280,8 +1362,14 @@ STAGE PLANS:
 
 PREHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test3 L join test4 R on L.key=R.key AND L.value=R.value
 PREHOOK: type: QUERY
+PREHOOK: Input: default@test3
+PREHOOK: Input: default@test4
+#### A masked pattern was here ####
 POSTHOOK: query: explain extended select /*+ MAPJOIN(R) */ * from test3 L join test4 R on L.key=R.key AND L.value=R.value
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@test3
+POSTHOOK: Input: default@test4
+#### A masked pattern was here ####
 STAGE DEPENDENCIES:
   Stage-3 is a root stage
   Stage-1 depends on stages: Stage-3
@@ -1298,6 +1386,7 @@ STAGE PLANS:
         r 
           TableScan
             alias: r
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -1315,6 +1404,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: l
+            filterExpr: (key is not null and value is not null) (type: boolean)
             Statistics: Num rows: 1 Data size: 42000 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
             Filter Operator
@@ -1356,6 +1446,7 @@ STAGE PLANS:
                     TotalFiles: 1
                     GatherStats: false
                     MultiFileSpray: false
+      Execution mode: vectorized
       Local Work:
         Map Reduce Local Work
       Path -> Alias:
@@ -1369,7 +1460,8 @@ STAGE PLANS:
             properties:
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 3
-              bucket_field_name key
+              bucket_field_name key,value
+              bucketing_version 2
               column.name.delimiter ,
               columns key,value
               columns.comments 
@@ -1391,7 +1483,8 @@ STAGE PLANS:
               properties:
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 3
-                bucket_field_name key
+                bucket_field_name key,value
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key,value
                 columns.comments 

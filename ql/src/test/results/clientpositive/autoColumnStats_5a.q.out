@@ -9,9 +9,13 @@ POSTHOOK: Output: default@partitioned1
 PREHOOK: query: explain extended 
 insert into table partitioned1 partition(part=1) values(1, 'original')
 PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@partitioned1@part=1
 POSTHOOK: query: explain extended 
 insert into table partitioned1 partition(part=1) values(1, 'original')
 POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@partitioned1@part=1
 Explain
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
@@ -56,6 +60,7 @@ STAGE PLANS:
                         output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                         properties:
                           bucket_count -1
+                          bucketing_version 2
                           column.name.delimiter ,
                           columns a,b
                           columns.comments 
@@ -101,6 +106,7 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns 
               columns.comments 
@@ -116,6 +122,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns 
                 columns.comments 
@@ -186,6 +193,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns a,b
                 columns.comments 
@@ -225,6 +233,7 @@ STAGE PLANS:
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
                     bucket_count -1
+                    bucketing_version 2
                     column.name.delimiter ,
                     columns a,b
                     columns.comments 
@@ -252,6 +261,7 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns a,b
               columns.comments 
@@ -269,6 +279,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns a,b
                 columns.comments 
@@ -301,6 +312,7 @@ STAGE PLANS:
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
                     bucket_count -1
+                    bucketing_version 2
                     column.name.delimiter ,
                     columns a,b
                     columns.comments 
@@ -328,6 +340,7 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns a,b
               columns.comments 
@@ -345,6 +358,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns a,b
                 columns.comments 
@@ -420,9 +434,13 @@ Storage Desc Params:
 PREHOOK: query: explain extended 
 insert into table partitioned1 partition(part=1) values(2, 'original'), (3, 'original'),(4, 'original')
 PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@partitioned1@part=1
 POSTHOOK: query: explain extended 
 insert into table partitioned1 partition(part=1) values(2, 'original'), (3, 'original'),(4, 'original')
 POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@partitioned1@part=1
 Explain
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
@@ -467,6 +485,7 @@ STAGE PLANS:
                         output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                         properties:
                           bucket_count -1
+                          bucketing_version 2
                           column.name.delimiter ,
                           columns a,b
                           columns.comments 
@@ -512,6 +531,7 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns 
               columns.comments 
@@ -527,6 +547,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns 
                 columns.comments 
@@ -597,6 +618,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns a,b
                 columns.comments 
@@ -636,6 +658,7 @@ STAGE PLANS:
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
                     bucket_count -1
+                    bucketing_version 2
                     column.name.delimiter ,
                     columns a,b
                     columns.comments 
@@ -663,6 +686,7 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns a,b
               columns.comments 
@@ -680,6 +704,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns a,b
                 columns.comments 
@@ -712,6 +737,7 @@ STAGE PLANS:
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
                     bucket_count -1
+                    bucketing_version 2
                     column.name.delimiter ,
                     columns a,b
                     columns.comments 
@@ -739,6 +765,7 @@ STAGE PLANS:
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns a,b
               columns.comments 
@@ -756,6 +783,7 @@ STAGE PLANS:
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns a,b
                 columns.comments 
@@ -792,8 +820,12 @@ POSTHOOK: Lineage: partitioned1 PARTITION(part=1).b SCRIPT []
 col1	col2
 PREHOOK: query: explain insert into table partitioned1 partition(part=1) values(1, 'original'),(2, 'original'), (3, 'original'),(4, 'original')
 PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@partitioned1@part=1
 POSTHOOK: query: explain insert into table partitioned1 partition(part=1) values(1, 'original'),(2, 'original'), (3, 'original'),(4, 'original')
 POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@partitioned1@part=1
 Explain
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
@@ -949,6 +981,7 @@ Retention:          	0
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	bucketing_version   	2                   
 	numFiles            	2                   
 	numPartitions       	1                   
 	numRows             	4                   

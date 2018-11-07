@@ -24,8 +24,12 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@insert_into4b
 PREHOOK: query: EXPLAIN INSERT INTO TABLE insert_into4a SELECT * FROM src LIMIT 10
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+PREHOOK: Output: default@insert_into4a
 POSTHOOK: query: EXPLAIN INSERT INTO TABLE insert_into4a SELECT * FROM src LIMIT 10
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+POSTHOOK: Output: default@insert_into4a
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -50,6 +54,7 @@ STAGE PLANS:
                   sort order: 
                   Statistics: Num rows: 10 Data size: 100 Basic stats: COMPLETE Column stats: NONE
                   value expressions: _col0 (type: string), _col1 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: VALUE._col0 (type: string), VALUE._col1 (type: string)
@@ -112,6 +117,7 @@ STAGE PLANS:
               sort order: 
               Statistics: Num rows: 1 Data size: 864 Basic stats: COMPLETE Column stats: NONE
               value expressions: _col0 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,bitvector:binary>), _col1 (type: struct<columntype:string,maxlength:bigint,sumlength:bigint,count:bigint,countnulls:bigint,bitvector:binary>)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: compute_stats(VALUE._col0), compute_stats(VALUE._col1)
@@ -151,8 +157,12 @@ POSTHOOK: Input: default@insert_into4a
 -826625916
 PREHOOK: query: EXPLAIN INSERT INTO TABLE insert_into4a SELECT * FROM src LIMIT 10
 PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+PREHOOK: Output: default@insert_into4a
 POSTHOOK: query: EXPLAIN INSERT INTO TABLE insert_into4a SELECT * FROM src LIMIT 10
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+POSTHOOK: Output: default@insert_into4a
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
@@ -177,6 +187,7 @@ STAGE PLANS:
                   sort order: 
                   Statistics: Num rows: 10 Data size: 100 Basic stats: COMPLETE Column stats: NONE
                   value expressions: _col0 (type: string), _col1 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: VALUE._col0 (type: string), VALUE._col1 (type: string)
@@ -239,6 +250,7 @@ STAGE PLANS:
               sort order: 
               Statistics: Num rows: 1 Data size: 864 Basic stats: COMPLETE Column stats: NONE
               value expressions: _col0 (type: struct<columntype:string,min:bigint,max:bigint,countnulls:bigint,bitvector:binary>), _col1 (type: struct<columntype:string,maxlength:bigint,sumlength:bigint,count:bigint,countnulls:bigint,bitvector:binary>)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: compute_stats(VALUE._col0), compute_stats(VALUE._col1)
@@ -278,8 +290,12 @@ POSTHOOK: Input: default@insert_into4a
 -1653251832
 PREHOOK: query: EXPLAIN INSERT INTO TABLE insert_into4b SELECT * FROM insert_into4a
 PREHOOK: type: QUERY
+PREHOOK: Input: default@insert_into4a
+PREHOOK: Output: default@insert_into4b
 POSTHOOK: query: EXPLAIN INSERT INTO TABLE insert_into4b SELECT * FROM insert_into4a
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@insert_into4a
+POSTHOOK: Output: default@insert_into4b
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-7 depends on stages: Stage-1 , consists of Stage-4, Stage-3, Stage-5

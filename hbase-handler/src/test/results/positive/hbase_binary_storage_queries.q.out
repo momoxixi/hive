@@ -2,7 +2,7 @@ PREHOOK: query: DROP TABLE t_hbase
 PREHOOK: type: DROPTABLE
 POSTHOOK: query: DROP TABLE t_hbase
 POSTHOOK: type: DROPTABLE
-PREHOOK: query: CREATE TABLE t_hbase(key STRING,
+PREHOOK: query: CREATE EXTERNAL TABLE t_hbase(key STRING,
                      tinyint_col TINYINT,
                      smallint_col SMALLINT,
                      int_col INT,
@@ -12,12 +12,13 @@ PREHOOK: query: CREATE TABLE t_hbase(key STRING,
                      boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#-,cf:binarybyte#-,cf:binaryshort#-,cf:binaryint#-,cf:binarylong#-,cf:binaryfloat#-,cf:binarydouble#-,cf:binaryboolean#-")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive",
-               "hbase.table.default.storage.type" = "binary")
+TBLPROPERTIES ("hbase.table.name" = "t_hive",
+               "hbase.table.default.storage.type" = "binary",
+               "external.table.purge" = "true")
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@t_hbase
-POSTHOOK: query: CREATE TABLE t_hbase(key STRING,
+POSTHOOK: query: CREATE EXTERNAL TABLE t_hbase(key STRING,
                      tinyint_col TINYINT,
                      smallint_col SMALLINT,
                      int_col INT,
@@ -27,8 +28,9 @@ POSTHOOK: query: CREATE TABLE t_hbase(key STRING,
                      boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#-,cf:binarybyte#-,cf:binaryshort#-,cf:binaryint#-,cf:binarylong#-,cf:binaryfloat#-,cf:binarydouble#-,cf:binaryboolean#-")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive",
-               "hbase.table.default.storage.type" = "binary")
+TBLPROPERTIES ("hbase.table.name" = "t_hive",
+               "hbase.table.default.storage.type" = "binary",
+               "external.table.purge" = "true")
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t_hbase
@@ -53,11 +55,15 @@ Database:           	default
 #### A masked pattern was here ####
 Retention:          	0                   	 
 #### A masked pattern was here ####
-Table Type:         	MANAGED_TABLE       	 
+Table Type:         	EXTERNAL_TABLE      	 
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"bigint_col\":\"true\",\"boolean_col\":\"true\",\"double_col\":\"true\",\"float_col\":\"true\",\"int_col\":\"true\",\"key\":\"true\",\"smallint_col\":\"true\",\"tinyint_col\":\"true\"}}
-	hbase.mapreduce.hfileoutputformat.table.name	t_hive              
+	EXTERNAL            	TRUE                
+	bucketing_version   	2                   
+	discover.partitions 	true                
+	external.table.purge	true                
 	hbase.table.default.storage.type	binary              
+	hbase.table.name    	t_hive              
 	numFiles            	0                   
 	numRows             	0                   
 	rawDataSize         	0                   
@@ -193,7 +199,7 @@ PREHOOK: query: CREATE EXTERNAL TABLE t_hbase_1(key STRING,
                                 boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#b,cf:binarybyte#b,cf:binaryshort#b,cf:binaryint#b,cf:binarylong#b,cf:binaryfloat#b,cf:binarydouble#b,cf:binaryboolean#b")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive")
+TBLPROPERTIES ("hbase.table.name" = "t_hive")
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@t_hbase_1
@@ -207,7 +213,7 @@ POSTHOOK: query: CREATE EXTERNAL TABLE t_hbase_1(key STRING,
                                 boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#b,cf:binarybyte#b,cf:binaryshort#b,cf:binaryint#b,cf:binarylong#b,cf:binaryfloat#b,cf:binarydouble#b,cf:binaryboolean#b")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive")
+TBLPROPERTIES ("hbase.table.name" = "t_hive")
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t_hbase_1
@@ -236,7 +242,9 @@ Table Type:         	EXTERNAL_TABLE
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"bigint_col\":\"true\",\"boolean_col\":\"true\",\"double_col\":\"true\",\"float_col\":\"true\",\"int_col\":\"true\",\"key\":\"true\",\"smallint_col\":\"true\",\"tinyint_col\":\"true\"}}
 	EXTERNAL            	TRUE                
-	hbase.mapreduce.hfileoutputformat.table.name	t_hive              
+	bucketing_version   	2                   
+	discover.partitions 	true                
+	hbase.table.name    	t_hive              
 	numFiles            	0                   
 	numRows             	0                   
 	rawDataSize         	0                   
@@ -336,7 +344,7 @@ PREHOOK: query: DROP TABLE t_hbase_2
 PREHOOK: type: DROPTABLE
 POSTHOOK: query: DROP TABLE t_hbase_2
 POSTHOOK: type: DROPTABLE
-PREHOOK: query: CREATE TABLE t_hbase_2(key STRING,
+PREHOOK: query: CREATE EXTERNAL TABLE t_hbase_2(key STRING,
                      tinyint_col TINYINT,
                      smallint_col SMALLINT,
                      int_col INT,
@@ -346,11 +354,11 @@ PREHOOK: query: CREATE TABLE t_hbase_2(key STRING,
                      boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#-,cf:binarybyte#-,cf:binaryshort#-,cf:binaryint#-,cf:binarylong#-,cf:binaryfloat#-,cf:binarydouble#-,cf:binaryboolean#-")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive_2")
+TBLPROPERTIES ("hbase.table.name" = "t_hive_2", "external.table.purge" = "true")
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@t_hbase_2
-POSTHOOK: query: CREATE TABLE t_hbase_2(key STRING,
+POSTHOOK: query: CREATE EXTERNAL TABLE t_hbase_2(key STRING,
                      tinyint_col TINYINT,
                      smallint_col SMALLINT,
                      int_col INT,
@@ -360,7 +368,7 @@ POSTHOOK: query: CREATE TABLE t_hbase_2(key STRING,
                      boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#-,cf:binarybyte#-,cf:binaryshort#-,cf:binaryint#-,cf:binarylong#-,cf:binaryfloat#-,cf:binarydouble#-,cf:binaryboolean#-")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive_2")
+TBLPROPERTIES ("hbase.table.name" = "t_hive_2", "external.table.purge" = "true")
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t_hbase_2
@@ -481,7 +489,7 @@ PREHOOK: query: CREATE EXTERNAL TABLE t_hbase_3(key STRING,
                                 boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#b,cf:binarybyte#b,cf:binaryshort#b,cf:binaryint#b,cf:binarylong#b,cf:binaryfloat#b,cf:binarydouble#b,cf:binaryboolean#b")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive_2")
+TBLPROPERTIES ("hbase.table.name" = "t_hive_2")
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@t_hbase_3
@@ -495,7 +503,7 @@ POSTHOOK: query: CREATE EXTERNAL TABLE t_hbase_3(key STRING,
                                 boolean_col BOOLEAN)
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#b,cf:binarybyte#b,cf:binaryshort#b,cf:binaryint#b,cf:binarylong#b,cf:binaryfloat#b,cf:binarydouble#b,cf:binaryboolean#b")
-TBLPROPERTIES ("hbase.mapreduce.hfileoutputformat.table.name" = "t_hive_2")
+TBLPROPERTIES ("hbase.table.name" = "t_hive_2")
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t_hbase_3
@@ -583,8 +591,9 @@ PREHOOK: query: CREATE EXTERNAL TABLE t_hbase_4(key STRING,
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#-,cf:binarybyte#-,cf:binaryshort#-,cf:binaryint#-,cf:binarylong#-,cf:binaryfloat#-,cf:binarydouble#-,cf:binaryboolean#-")
 TBLPROPERTIES (
-"hbase.mapreduce.hfileoutputformat.table.name" = "t_hive_2",
-"hbase.table.default.storage.type" = "binary")
+"hbase.table.name" = "t_hive_2",
+"hbase.table.default.storage.type" = "binary",
+"external.table.purge" = "true")
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@t_hbase_4
@@ -599,8 +608,9 @@ POSTHOOK: query: CREATE EXTERNAL TABLE t_hbase_4(key STRING,
 STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
 WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key#-,cf:binarybyte#-,cf:binaryshort#-,cf:binaryint#-,cf:binarylong#-,cf:binaryfloat#-,cf:binarydouble#-,cf:binaryboolean#-")
 TBLPROPERTIES (
-"hbase.mapreduce.hfileoutputformat.table.name" = "t_hive_2",
-"hbase.table.default.storage.type" = "binary")
+"hbase.table.name" = "t_hive_2",
+"hbase.table.default.storage.type" = "binary",
+"external.table.purge" = "true")
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t_hbase_4

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,18 +22,12 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.druid.query.dimension.DimensionSpec;
-import io.druid.query.dimension.ExtractionDimensionSpec;
-import io.druid.query.extraction.TimeFormatExtractionFn;
-
 /**
  * Utils class for Druid SerDe.
  */
 public final class DruidSerDeUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(DruidSerDeUtils.class);
-
-  protected static final String ISO_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
   protected static final String FLOAT_TYPE = "FLOAT";
   protected static final String DOUBLE_TYPE = "DOUBLE";
@@ -63,24 +57,6 @@ public final class DruidSerDeUtils {
         LOG.warn("Transformation to STRING for unknown type " + typeName);
         return TypeInfoFactory.stringTypeInfo;
     }
-  }
-
-  /* Extract type from dimension spec. It returns TIMESTAMP if it is a FLOOR,
-   * INTEGER if it is a EXTRACT, or STRING otherwise. */
-  public static PrimitiveTypeInfo extractTypeFromDimension(DimensionSpec ds) {
-    if (ds instanceof ExtractionDimensionSpec) {
-      ExtractionDimensionSpec eds = (ExtractionDimensionSpec) ds;
-      TimeFormatExtractionFn tfe = (TimeFormatExtractionFn) eds.getExtractionFn();
-      if (tfe.getFormat() == null || tfe.getFormat().equals(ISO_TIME_FORMAT)) {
-        // Timestamp (null or default used by FLOOR)
-        return TypeInfoFactory.timestampLocalTZTypeInfo;
-      } else {
-        // EXTRACT from timestamp
-        return TypeInfoFactory.intTypeInfo;
-      }
-    }
-    // Default
-    return TypeInfoFactory.stringTypeInfo;
   }
 
 }

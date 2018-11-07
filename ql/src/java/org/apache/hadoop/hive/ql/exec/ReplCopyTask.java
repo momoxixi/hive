@@ -20,6 +20,8 @@ package org.apache.hadoop.hive.ql.exec;
 
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.ql.ErrorMsg;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.plan.CopyWork;
@@ -45,6 +47,9 @@ import org.apache.hadoop.hive.ql.parse.LoadSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
 import org.apache.hadoop.util.StringUtils;
 
+import static org.apache.hadoop.hive.common.FileUtils.HIDDEN_FILES_PATH_FILTER;
+import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.REPL_ENABLE_MOVE_OPTIMIZATION;
+
 public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
 
   private static final long serialVersionUID = 1L;
@@ -60,7 +65,10 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
     LOG.debug("ReplCopyTask.execute()");
     FileSystem dstFs = null;
     Path toPath = null;
+
     try {
+      Hive hiveDb = getHive();
+
       // Note: CopyWork supports copying multiple files, but ReplCopyWork doesn't.
       //       Not clear of ReplCopyWork should inherit from CopyWork.
       if (work.getFromPaths().length > 1 || work.getToPaths().length > 1) {
@@ -80,10 +88,10 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
 
       // This should only be true for copy tasks created from functions, otherwise there should never
       // be a CM uri in the from path.
-      if (ReplChangeManager.isCMFileUri(fromPath, srcFs)) {
-        String[] result = ReplChangeManager.getFileWithChksumFromURI(fromPath.toString());
+      if (ReplChangeManager.isCMFileUri(fromPath)) {
+        String[] result = ReplChangeManager.decodeFileUri(fromPath.toString());
         ReplChangeManager.FileInfo sourceInfo = ReplChangeManager
-            .getFileInfo(new Path(result[0]), result[1], conf);
+            .getFileInfo(new Path(result[0]), result[1], result[2], result[3], conf);
         if (FileUtils.copy(
             sourceInfo.getSrcFs(), sourceInfo.getSourcePath(),
             dstFs, toPath, false, false, conf)) {
@@ -130,11 +138,20 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
           console.printInfo("Copying file: " + oneSrc.getPath().toString());
           LOG.debug("ReplCopyTask :cp:{}=>{}", oneSrc.getPath(), toPath);
           srcFiles.add(new ReplChangeManager.FileInfo(oneSrc.getPath().getFileSystem(conf),
-                                                      oneSrc.getPath()));
+                                                      oneSrc.getPath(), null));
         }
       }
 
       LOG.debug("ReplCopyTask numFiles: {}", srcFiles.size());
+
+      // in case of move optimization, file is directly copied to destination. So we need to clear the old content, if
+      // its a replace (insert overwrite ) operation.
+      if (work.getDeleteDestIfExist() && dstFs.exists(toPath)) {
+        LOG.debug(" path " + toPath + " is cleaned before renaming");
+        hiveDb.cleanUpOneDirectoryForReplace(toPath, dstFs, HIDDEN_FILES_PATH_FILTER, conf, work.getNeedRecycle(),
+                                                          work.getIsAutoPerge());
+      }
+
       if (!FileUtils.mkdir(dstFs, toPath, conf)) {
         console.printError("Cannot make target directory: " + toPath.toString());
         return 2;
@@ -150,10 +167,19 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
           continue;
         }
         String destFileName = srcFile.getCmPath().getName();
-        Path destFile = new Path(toPath, destFileName);
+        Path destRoot = CopyUtils.getCopyDestination(srcFile, toPath);
+        Path destFile = new Path(destRoot, destFileName);
         if (dstFs.exists(destFile)) {
           String destFileWithSourceName = srcFile.getSourcePath().getName();
-          Path newDestFile = new Path(toPath, destFileWithSourceName);
+          Path newDestFile = new Path(destRoot, destFileWithSourceName);
+
+          // if the new file exist then delete it before renaming, to avoid rename failure. If the copy is done
+          // directly to table path (bypassing staging directory) then there might be some stale files from previous
+          // incomplete/failed load. No need of recycle as this is a case of stale file.
+          if (dstFs.exists(newDestFile)) {
+            LOG.debug(" file " + newDestFile + " is deleted before renaming");
+            dstFs.delete(newDestFile, true);
+          }
           boolean result = dstFs.rename(destFile, newDestFile);
           if (!result) {
             throw new IllegalStateException(
@@ -163,9 +189,9 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
       }
       return 0;
     } catch (Exception e) {
-      console.printError("Failed with exception " + e.getMessage(), "\n"
-          + StringUtils.stringifyException(e));
-      return (1);
+      LOG.error(StringUtils.stringifyException(e));
+      setException(e);
+      return ErrorMsg.getErrorMsg(e.getMessage()).getErrorCode();
     }
   }
 
@@ -183,18 +209,18 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
     try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(fileListing)))) {
       // TODO : verify if skipping charset here is okay
 
-      String line = null;
+      String line;
       while ((line = br.readLine()) != null) {
         LOG.debug("ReplCopyTask :_filesReadLine: {}", line);
 
-        String[] fileWithChksum = ReplChangeManager.getFileWithChksumFromURI(line);
+        String[] fragments = ReplChangeManager.decodeFileUri(line);
         try {
           ReplChangeManager.FileInfo f = ReplChangeManager
-              .getFileInfo(new Path(fileWithChksum[0]), fileWithChksum[1], conf);
+              .getFileInfo(new Path(fragments[0]), fragments[1], fragments[2], fragments[3], conf);
           filePaths.add(f);
         } catch (MetaException e) {
           // issue warning for missing file and throw exception
-          LOG.warn("Cannot find {} in source repo or cmroot", fileWithChksum[0]);
+          LOG.warn("Cannot find {} in source repo or cmroot", fragments[0]);
           throw new IOException(e.getMessage());
         }
         // Note - we need srcFs rather than fs, because it is possible that the _files lists files
@@ -221,11 +247,17 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
     return "REPL_COPY";
   }
 
-  public static Task<?> getLoadCopyTask(ReplicationSpec replicationSpec, Path srcPath, Path dstPath, HiveConf conf) {
+  public static Task<?> getLoadCopyTask(ReplicationSpec replicationSpec, Path srcPath, Path dstPath,
+                                        HiveConf conf, boolean isAutoPurge, boolean needRecycle) {
     Task<?> copyTask = null;
     LOG.debug("ReplCopyTask:getLoadCopyTask: {}=>{}", srcPath, dstPath);
     if ((replicationSpec != null) && replicationSpec.isInReplicationScope()){
       ReplCopyWork rcwork = new ReplCopyWork(srcPath, dstPath, false);
+      if (replicationSpec.isReplace() &&  conf.getBoolVar(REPL_ENABLE_MOVE_OPTIMIZATION)) {
+        rcwork.setDeleteDestIfExist(true);
+        rcwork.setAutoPurge(isAutoPurge);
+        rcwork.setNeedRecycle(needRecycle);
+      }
       LOG.debug("ReplCopyTask:\trcwork");
       if (replicationSpec.isLazy()) {
         LOG.debug("ReplCopyTask:\tlazy");
@@ -236,10 +268,10 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
         String distCpDoAsUser = conf.getVar(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER);
         rcwork.setDistCpDoAsUser(distCpDoAsUser);
       }
-      copyTask = TaskFactory.get(rcwork, conf, true);
+      copyTask = TaskFactory.get(rcwork, conf);
     } else {
       LOG.debug("ReplCopyTask:\tcwork");
-      copyTask = TaskFactory.get(new CopyWork(srcPath, dstPath, false), conf, true);
+      copyTask = TaskFactory.get(new CopyWork(srcPath, dstPath, false), conf);
     }
     return copyTask;
   }

@@ -27,15 +27,18 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -50,7 +53,7 @@ import org.apache.hadoop.hive.ql.IDriver;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hive.hcatalog.common.HCatUtil;
-import org.apache.pig.ExecType;
+import org.apache.hive.hcatalog.mapreduce.HCatBaseTest;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
@@ -111,6 +114,7 @@ public class TestPigHBaseStorageHandler extends SkeletonHBaseTest {
 
   private List<Put> generatePuts(String tableName) throws IOException {
 
+    List<String> columnFamilies = Arrays.asList("testFamily");
     List<Put> myPuts;
     myPuts = new ArrayList<Put>();
     for (int i = 1; i <=10; i++) {
@@ -148,7 +152,7 @@ public class TestPigHBaseStorageHandler extends SkeletonHBaseTest {
 
     String tableName = newTableName("MyTable");
     String databaseName = newTableName("MyDatabase");
-    //Table name will be lower case unless specified by hbase.mapreduce.hfileoutputformat.table.name property
+    //Table name will be lower case unless specified by hbase.table.name property
     String hbaseTableName = "testTable";
     String db_dir = HCatUtil.makePathASafeFileName(getTestDir() + "/hbasedb");
 
@@ -161,16 +165,17 @@ public class TestPigHBaseStorageHandler extends SkeletonHBaseTest {
         + "(key float, testqualifier1 string, testqualifier2 int) STORED BY " +
         "'org.apache.hadoop.hive.hbase.HBaseStorageHandler'"
         + " WITH SERDEPROPERTIES ('hbase.columns.mapping'=':key,testFamily:testQualifier1,testFamily:testQualifier2')"
-        +  " TBLPROPERTIES ('hbase.mapreduce.hfileoutputformat.table.name'='"+hbaseTableName+"')";
+        +  " TBLPROPERTIES ('hbase.table.name'='"+hbaseTableName+"')";
 
     CommandProcessorResponse responseOne = driver.run(deleteQuery);
     assertEquals(0, responseOne.getResponseCode());
 
+
     CommandProcessorResponse responseTwo = driver.run(dbQuery);
     assertEquals(0, responseTwo.getResponseCode());
 
+
     CommandProcessorResponse responseThree = driver.run(tableQuery);
-    assertEquals(0, responseThree.getResponseCode());
 
     Connection connection = null;
     Admin hAdmin = null;
@@ -190,7 +195,7 @@ public class TestPigHBaseStorageHandler extends SkeletonHBaseTest {
 
     assertTrue(doesTableExist);
 
-    PigServer server = new PigServer(ExecType.LOCAL,hcatConf.getAllProperties());
+    PigServer server = HCatBaseTest.createPigServer(false, hcatConf.getAllProperties());
     server.registerQuery("A = load '"+databaseName+"."+tableName+"' using org.apache.hive.hcatalog.pig.HCatLoader();");
 
     Schema dumpedASchema = server.dumpSchema("A");
@@ -216,7 +221,7 @@ public class TestPigHBaseStorageHandler extends SkeletonHBaseTest {
 
     String tableName = newTableName("MyTable");
     String databaseName = newTableName("MyDatabase");
-    //Table name will be lower case unless specified by hbase.mapreduce.hfileoutputformat.table.name property
+    //Table name will be lower case unless specified by hbase.table.name property
     String hbaseTableName = (databaseName + "." + tableName).toLowerCase();
     String db_dir = HCatUtil.makePathASafeFileName(getTestDir() + "/hbasedb");
 
@@ -240,7 +245,6 @@ public class TestPigHBaseStorageHandler extends SkeletonHBaseTest {
 
 
     CommandProcessorResponse responseThree = driver.run(tableQuery);
-    assertEquals(0, responseThree.getResponseCode());
 
     Connection connection = null;
     Admin hAdmin = null;
@@ -277,7 +281,7 @@ public class TestPigHBaseStorageHandler extends SkeletonHBaseTest {
 
     int index=1;
 
-    PigServer server = new PigServer(ExecType.LOCAL,hcatConf.getAllProperties());
+    PigServer server = HCatBaseTest.createPigServer(false, hcatConf.getAllProperties());
     server.registerQuery("A = load '"+databaseName+"."+tableName+"' using org.apache.hive.hcatalog.pig.HCatLoader();");
     server.registerQuery("B = filter A by key < 5;");
     server.registerQuery("C = foreach B generate key,testqualifier2;");
@@ -301,7 +305,7 @@ public class TestPigHBaseStorageHandler extends SkeletonHBaseTest {
 
     String tableName = newTableName("MyTable");
     String databaseName = newTableName("MyDatabase");
-    //Table name will be lower case unless specified by hbase.mapreduce.hfileoutputformat.table.name property
+    //Table name will be lower case unless specified by hbase.table.name property
     String hbaseTableName = (databaseName + "." + tableName).toLowerCase();
     String db_dir = HCatUtil.makePathASafeFileName(getTestDir() + "/hbasedb");
     String POPTXT_FILE_NAME = db_dir+"testfile.txt";
@@ -321,14 +325,16 @@ public class TestPigHBaseStorageHandler extends SkeletonHBaseTest {
 
     String selectQuery = "SELECT * from "+databaseName.toLowerCase()+"."+tableName.toLowerCase();
 
+
     CommandProcessorResponse responseOne = driver.run(deleteQuery);
     assertEquals(0, responseOne.getResponseCode());
+
 
     CommandProcessorResponse responseTwo = driver.run(dbQuery);
     assertEquals(0, responseTwo.getResponseCode());
 
+
     CommandProcessorResponse responseThree = driver.run(tableQuery);
-    assertEquals(0, responseThree.getResponseCode());
 
     Connection connection = null;
     Admin hAdmin = null;
@@ -342,9 +348,10 @@ public class TestPigHBaseStorageHandler extends SkeletonHBaseTest {
 
       assertTrue(doesTableExist);
 
+
       createTestDataFile(POPTXT_FILE_NAME);
 
-      PigServer server = new PigServer(ExecType.LOCAL,hcatConf.getAllProperties());
+      PigServer server = HCatBaseTest.createPigServer(false, hcatConf.getAllProperties());
       server.registerQuery("A = load '"+POPTXT_FILE_NAME+"' using PigStorage() as (key:int, testqualifier1:float, testqualifier2:chararray);");
       server.registerQuery("B = filter A by (key > 2) AND (key < 8) ;");
       server.registerQuery("store B into '"+databaseName.toLowerCase()+"."+tableName.toLowerCase()+"' using  org.apache.hive.hcatalog.pig.HCatStorer();");

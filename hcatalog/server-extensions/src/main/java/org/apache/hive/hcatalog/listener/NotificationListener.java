@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -140,7 +140,8 @@ public class NotificationListener extends MetaStoreEventListener {
       Partition after = ape.getNewPartition();
 
       String topicName = getTopicName(ape.getTable());
-      send(messageFactory.buildAlterPartitionMessage(ape.getTable(),before, after), topicName);
+      send(messageFactory.buildAlterPartitionMessage(ape.getTable(),before, after,
+              ape.getWriteId()), topicName);
     }
   }
 
@@ -207,7 +208,7 @@ public class NotificationListener extends MetaStoreEventListener {
       Configuration conf = handler.getConf();
       Table newTbl;
       try {
-        newTbl = handler.get_table_core(tbl.getDbName(), tbl.getTableName())
+        newTbl = handler.get_table_core(tbl.getCatName(), tbl.getDbName(), tbl.getTableName())
           .deepCopy();
         newTbl.getParameters().put(
           HCatConstants.HCAT_MSGBUS_TOPIC_NAME,
@@ -254,7 +255,7 @@ public class NotificationListener extends MetaStoreEventListener {
       // DB topic - Alan.
       String topicName = getTopicPrefix(tableEvent.getIHMSHandler().getConf()) + "." +
           after.getDbName().toLowerCase();
-      send(messageFactory.buildAlterTableMessage(before, after), topicName);
+      send(messageFactory.buildAlterTableMessage(before, after, tableEvent.getWriteId()), topicName);
     }
   }
 

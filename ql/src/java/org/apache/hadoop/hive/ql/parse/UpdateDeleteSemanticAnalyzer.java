@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,9 +17,8 @@
  */
 package org.apache.hadoop.hive.ql.parse;
 
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
-
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,27 +28,47 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.antlr.runtime.TokenRewriteStream;
+import org.antlr.runtime.tree.Tree;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.ql.Context;
+import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.QueryState;
+import org.apache.hadoop.hive.ql.exec.DDLTask;
+import org.apache.hadoop.hive.ql.exec.StatsTask;
+import org.apache.hadoop.hive.ql.exec.Task;
+import org.apache.hadoop.hive.ql.exec.TaskFactory;
 import org.apache.hadoop.hive.ql.hooks.Entity;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
+import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.hive.ql.lib.Node;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.HiveUtils;
 import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.metadata.VirtualColumn;
+import org.apache.hadoop.hive.ql.plan.AlterTableDesc;
+import org.apache.hadoop.hive.ql.plan.CreateTableLikeDesc;
+import org.apache.hadoop.hive.ql.plan.DDLWork;
+import org.apache.hadoop.hive.ql.plan.DropTableDesc;
+import org.apache.hadoop.hive.ql.plan.ExportWork;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -59,6 +78,7 @@ import org.apache.hadoop.hive.ql.session.SessionState;
  * updates and deletes instead.
  */
 public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
+  private static final Logger LOG = LoggerFactory.getLogger(UpdateDeleteSemanticAnalyzer.class);
 
   private boolean useSuper = false;
 
@@ -84,6 +104,9 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
         case HiveParser.TOK_MERGE:
           analyzeMerge(tree);
           break;
+        case HiveParser.TOK_EXPORT:
+          analyzeAcidExport(tree);
+          break;
         default:
           throw new RuntimeException("Asked to parse token " + tree.getName() + " in " +
               "UpdateDeleteSemanticAnalyzer");
@@ -99,6 +122,247 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     return currentOperation == Context.Operation.DELETE;
   }
 
+  /**
+   * Exporting an Acid table is more complicated than a flat table.  It may contains delete events,
+   * which can only be interpreted properly withing the context of the table/metastore where they
+   * were generated.  It may also contain insert events that belong to transactions that aborted
+   * where the same constraints apply.
+   * In order to make the export artifact free of these constraints, the export does a
+   * insert into tmpTable select * from <export table> to filter/apply the events in current
+   * context and then export the tmpTable.  This export artifact can now be imported into any
+   * table on any cluster (subject to schema checks etc).
+   * See {@link #analyzeAcidExport(ASTNode)}
+   * @param tree Export statement
+   * @return true if exporting an Acid table.
+   */
+  public static boolean isAcidExport(ASTNode tree) throws SemanticException {
+    assert tree != null && tree.getToken() != null &&
+        tree.getToken().getType() == HiveParser.TOK_EXPORT;
+    Tree tokTab = tree.getChild(0);
+    assert tokTab != null && tokTab.getType() == HiveParser.TOK_TAB;
+    Table tableHandle = null;
+    try {
+      tableHandle = getTable((ASTNode) tokTab.getChild(0), Hive.get(), false);
+    } catch(HiveException ex) {
+      throw new SemanticException(ex);
+    }
+
+    //tableHandle can be null if table doesn't exist
+    return tableHandle != null && AcidUtils.isFullAcidTable(tableHandle);
+  }
+  private static String getTmptTableNameForExport(Table exportTable) {
+    String tmpTableDb = exportTable.getDbName();
+    String tmpTableName = exportTable.getTableName() + "_" +
+        UUID.randomUUID().toString().replace('-', '_');
+    return Warehouse.getQualifiedName(tmpTableDb, tmpTableName);
+  }
+
+  /**
+   * See {@link #isAcidExport(ASTNode)}
+   * 1. create the temp table T
+   * 2. compile 'insert into T select * from acidTable'
+   * 3. compile 'export acidTable'  (acidTable will be replaced with T during execution)
+   * 4. create task to drop T
+   *
+   * Using a true temp (session level) table means it should not affect replication and the table
+   * is not visible outside the Session that created for security
+   */
+  private void analyzeAcidExport(ASTNode ast) throws SemanticException {
+    assert ast != null && ast.getToken() != null &&
+        ast.getToken().getType() == HiveParser.TOK_EXPORT;
+    ASTNode tableTree = (ASTNode)ast.getChild(0);
+    assert tableTree != null && tableTree.getType() == HiveParser.TOK_TAB;
+    ASTNode tokRefOrNameExportTable = (ASTNode) tableTree.getChild(0);
+    Table exportTable = getTargetTable(tokRefOrNameExportTable);
+    assert AcidUtils.isFullAcidTable(exportTable);
+
+    //need to create the table "manually" rather than creating a task since it has to exist to
+    // compile the insert into T...
+    String newTableName = getTmptTableNameForExport(exportTable); //this is db.table
+    Map<String, String> tblProps = new HashMap<>();
+    tblProps.put(hive_metastoreConstants.TABLE_IS_TRANSACTIONAL, Boolean.FALSE.toString());
+    String location;
+
+    // for temporary tables we set the location to something in the session's scratch dir
+    // it has the same life cycle as the tmp table
+    try {
+      // Generate a unique ID for temp table path.
+      // This path will be fixed for the life of the temp table.
+      Path path = new Path(SessionState.getTempTableSpace(conf), UUID.randomUUID().toString());
+      path = Warehouse.getDnsPath(path, conf);
+      location = path.toString();
+    } catch (MetaException err) {
+      throw new SemanticException("Error while generating temp table path:", err);
+    }
+
+    CreateTableLikeDesc ctlt = new CreateTableLikeDesc(newTableName,
+        false, true, null,
+        null, location, null, null,
+        tblProps,
+        true, //important so we get an exception on name collision
+        Warehouse.getQualifiedName(exportTable.getTTable()), false);
+    Table newTable;
+    try {
+      ReadEntity dbForTmpTable = new ReadEntity(db.getDatabase(exportTable.getDbName()));
+      inputs.add(dbForTmpTable); //so the plan knows we are 'reading' this db - locks, security...
+      DDLTask createTableTask = (DDLTask) TaskFactory.get(
+          new DDLWork(new HashSet<>(), new HashSet<>(), ctlt), conf);
+      createTableTask.setConf(conf); //above get() doesn't set it
+      createTableTask.execute(new DriverContext(new Context(conf)));
+      newTable = db.getTable(newTableName);
+    } catch(IOException|HiveException ex) {
+      throw new SemanticException(ex);
+    }
+
+    //now generate insert statement
+    //insert into newTableName select * from ts <where partition spec>
+    StringBuilder rewrittenQueryStr = generateExportQuery(newTable.getPartCols(),
+        tokRefOrNameExportTable, tableTree, newTableName);
+    ReparseResult rr = parseRewrittenQuery(rewrittenQueryStr, ctx.getCmd());
+    Context rewrittenCtx = rr.rewrittenCtx;
+    rewrittenCtx.setIsUpdateDeleteMerge(false); //it's set in parseRewrittenQuery()
+    ASTNode rewrittenTree = rr.rewrittenTree;
+    try {
+      useSuper = true;
+      //newTable has to exist at this point to compile
+      super.analyze(rewrittenTree, rewrittenCtx);
+    } finally {
+      useSuper = false;
+    }
+    //now we have the rootTasks set up for Insert ... Select
+    removeStatsTasks(rootTasks);
+    //now make an ExportTask from temp table
+    /*analyzeExport() creates TableSpec which in turn tries to build
+     "public List<Partition> partitions" by looking in the metastore to find Partitions matching
+     the partition spec in the Export command.  These of course don't exist yet since we've not
+     ran the insert stmt yet!!!!!!!
+      */
+    Task<ExportWork> exportTask = ExportSemanticAnalyzer.analyzeExport(ast, newTableName,
+        db, conf, inputs, outputs);
+
+    AlterTableDesc alterTblDesc = null;
+    {
+      /**
+       * add an alter table task to set transactional props
+       * do it after populating temp table so that it's written as non-transactional table but
+       * update props before export so that export archive metadata has these props.  This way when
+       * IMPORT is done for this archive and target table doesn't exist, it will be created as Acid.
+       */
+      alterTblDesc = new AlterTableDesc(AlterTableDesc.AlterTableTypes.ADDPROPS);
+      HashMap<String, String> mapProps = new HashMap<>();
+      mapProps.put(hive_metastoreConstants.TABLE_IS_TRANSACTIONAL, Boolean.TRUE.toString());
+      alterTblDesc.setProps(mapProps);
+      alterTblDesc.setOldName(newTableName);
+    }
+    addExportTask(rootTasks, exportTask, TaskFactory.get(
+        new DDLWork(getInputs(), getOutputs(), alterTblDesc)));
+
+    {
+      /**
+       * Now make a task to drop temp table
+       * {@link DDLSemanticAnalyzer#analyzeDropTable(ASTNode ast, TableType expectedType)
+       */
+      ReplicationSpec replicationSpec = new ReplicationSpec();
+      DropTableDesc dropTblDesc = new DropTableDesc(newTableName, TableType.MANAGED_TABLE,
+          false, true, replicationSpec);
+      Task<DDLWork> dropTask =
+          TaskFactory.get(new DDLWork(new HashSet<>(), new HashSet<>(), dropTblDesc), conf);
+      exportTask.addDependentTask(dropTask);
+    }
+    markReadEntityForUpdate();
+    if(ctx.isExplainPlan()) {
+      try {
+        //so that "explain" doesn't "leak" tmp tables
+        // TODO: catalog
+        db.dropTable(newTable.getDbName(), newTable.getTableName(), true, true, true);
+      } catch(HiveException ex) {
+        LOG.warn("Unable to drop " + newTableName + " due to: " + ex.getMessage(), ex);
+      }
+    }
+  }
+  /**
+   * generate
+   * insert into newTableName select * from ts <where partition spec>
+   * for EXPORT command
+   */
+  private StringBuilder generateExportQuery(List<FieldSchema> partCols,
+      ASTNode tokRefOrNameExportTable, ASTNode tableTree, String newTableName)
+      throws SemanticException {
+    StringBuilder rewrittenQueryStr = new StringBuilder("insert into ").append(newTableName);
+    addPartitionColsToInsert(partCols, rewrittenQueryStr);
+    rewrittenQueryStr.append(" select * from ").append(getFullTableNameForSQL(tokRefOrNameExportTable));
+    //builds partition spec so we can build suitable WHERE clause
+    TableSpec exportTableSpec = new TableSpec(db, conf, tableTree, false, true);
+    if(exportTableSpec.getPartSpec() != null) {
+      StringBuilder whereClause = null;
+      int partColsIdx = -1; //keep track of corresponding col in partCols
+      for(Map.Entry<String, String> ent : exportTableSpec.getPartSpec().entrySet()) {
+        partColsIdx++;
+        if(ent.getValue() == null) {
+          continue; //partial spec
+        }
+        if(whereClause == null) {
+          whereClause = new StringBuilder(" WHERE ");
+        }
+        if(whereClause.length() > " WHERE ".length()) {
+          whereClause.append(" AND ");
+        }
+        whereClause.append(HiveUtils.unparseIdentifier(ent.getKey(), conf))
+            .append(" = ").append(genPartValueString(partCols.get(partColsIdx).getType(), ent.getValue()));
+      }
+      if(whereClause != null) {
+        rewrittenQueryStr.append(whereClause);
+      }
+    }
+    return rewrittenQueryStr;
+  }
+  /**
+   * Makes the exportTask run after all other tasks of the "insert into T ..." are done.
+   */
+  private void addExportTask(List<Task<?>> rootTasks,
+      Task<ExportWork> exportTask, Task<DDLWork> alterTable) {
+    for(Task<? extends  Serializable> t : rootTasks) {
+      if(t.getNumChild() <= 0) {
+        //todo: ConditionalTask#addDependentTask(Task) doesn't do the right thing: HIVE-18978
+        t.addDependentTask(alterTable);
+        //this is a leaf so add exportTask to follow it
+        alterTable.addDependentTask(exportTask);
+      } else {
+        addExportTask(t.getDependentTasks(), exportTask, alterTable);
+      }
+    }
+  }
+
+  private List<Task<?>> findStatsTasks(
+      List<Task<?>> rootTasks, List<Task<?>> statsTasks) {
+    for(Task<? extends  Serializable> t : rootTasks) {
+      if (t instanceof StatsTask) {
+        if(statsTasks == null) {
+          statsTasks = new ArrayList<>();
+        }
+        statsTasks.add(t);
+      }
+      if(t.getDependentTasks() != null) {
+        statsTasks = findStatsTasks(t.getDependentTasks(), statsTasks);
+      }
+    }
+    return statsTasks;
+  }
+
+  private void removeStatsTasks(List<Task<?>> rootTasks) {
+    List<Task<?>> statsTasks = findStatsTasks(rootTasks, null);
+    if(statsTasks == null) {
+      return;
+    }
+    for (Task<?> statsTask : statsTasks) {
+      if(statsTask.getParentTasks() == null) {
+        continue; //should never happen
+      }
+      for (Task<?> t : new ArrayList<>(statsTask.getParentTasks())) {
+        t.removeDependentTask(statsTask);
+      }
+    }
+  }
   private void analyzeUpdate(ASTNode tree) throws SemanticException {
     currentOperation = Context.Operation.UPDATE;
     reparseAndSuperAnalyze(tree);
@@ -108,26 +372,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     currentOperation = Context.Operation.DELETE;
     reparseAndSuperAnalyze(tree);
   }
-  /**
-   * Append list of partition columns to Insert statement, i.e. the 1st set of partCol1,partCol2
-   * INSERT INTO T PARTITION(partCol1,partCol2...) SELECT col1, ... partCol1,partCol2...
-   */
-  private void addPartitionColsToInsert(List<FieldSchema> partCols, StringBuilder rewrittenQueryStr) {
-    // If the table is partitioned we have to put the partition() clause in
-    if (partCols != null && partCols.size() > 0) {
-      rewrittenQueryStr.append(" partition (");
-      boolean first = true;
-      for (FieldSchema fschema : partCols) {
-        if (first)
-          first = false;
-        else
-          rewrittenQueryStr.append(", ");
-        //would be nice if there was a way to determine if quotes are needed
-        rewrittenQueryStr.append(HiveUtils.unparseIdentifier(fschema.getName(), this.conf));
-      }
-      rewrittenQueryStr.append(")");
-    }
-  }
+
   /**
    * Append list of partition columns to Insert statement, i.e. the 2nd set of partCol1,partCol2
    * INSERT INTO T PARTITION(partCol1,partCol2...) SELECT col1, ... partCol1,partCol2...
@@ -219,6 +464,13 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
    * @return the Metastore representation of the target table
    */
   private Table getTargetTable(ASTNode tabRef) throws SemanticException {
+    return getTable(tabRef, db, true);
+  }
+  /**
+   * @param throwException if false, return null if table doesn't exist, else throw
+   */
+  private static Table getTable(ASTNode tabRef, Hive db, boolean throwException)
+      throws SemanticException {
     String[] tableName;
     Table mTable;
     switch (tabRef.getType()) {
@@ -232,7 +484,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
           throw raiseWrongType("TOK_TABREF|TOK_TABNAME", tabRef);
     }
     try {
-      mTable = db.getTable(tableName[0], tableName[1]);
+      mTable = db.getTable(tableName[0], tableName[1], throwException);
     } catch (InvalidTableException e) {
       LOG.error("Failed to find table " + getDotName(tableName) + " got exception "
         + e.getMessage());
@@ -289,10 +541,13 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     // references.
     // todo: this may be a perf issue as it prevents the optimizer.. or not
     HiveConf.setVar(conf, HiveConf.ConfVars.DYNAMICPARTITIONINGMODE, "nonstrict");
+    // Disable LLAP IO wrapper; doesn't propagate extra ACID columns correctly.
+    HiveConf.setBoolVar(conf, ConfVars.LLAP_IO_ROW_WRAPPER_ENABLED, false);
     // Parse the rewritten query string
     Context rewrittenCtx;
     try {
       rewrittenCtx = new Context(conf);
+      rewrittenCtx.setHDFSCleanup(true);
       // We keep track of all the contexts that are created by this query
       // so we can clear them when we finish execution
       ctx.addRewrittenStatementContext(rewrittenCtx);
@@ -300,6 +555,9 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
       throw new SemanticException(ErrorMsg.UPDATEDELETE_IO_ERROR.getMsg());
     }
     rewrittenCtx.setExplainConfig(ctx.getExplainConfig());
+    rewrittenCtx.setExplainPlan(ctx.isExplainPlan());
+    rewrittenCtx.setStatsSource(ctx.getStatsSource());
+    rewrittenCtx.setPlanMapper(ctx.getPlanMapper());
     rewrittenCtx.setIsUpdateDeleteMerge(true);
     rewrittenCtx.setCmd(rewrittenQueryStr.toString());
 
@@ -534,7 +792,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
 
   /**
    * This allows us to take an arbitrary ASTNode and turn it back into SQL that produced it.
-   * Since HiveLexer.g is written such that it strips away any ` (back ticks) around 
+   * Since HiveLexer.g is written such that it strips away any ` (back ticks) around
    * quoted identifiers we need to add those back to generated SQL.
    * Additionally, the parser only produces tokens of type Identifier and never
    * QuotedIdentifier (HIVE-6013).  So here we just quote all identifiers.
@@ -572,7 +830,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
   /**
    * This allows us to take an arbitrary ASTNode and turn it back into SQL that produced it without
    * needing to understand what it is (except for QuotedIdentifiers)
-   * 
+   *
    */
   private String getMatchedText(ASTNode n) {
     quotedIdenfierHelper.visit(n);
@@ -581,7 +839,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
   }
   /**
    * Here we take a Merge statement AST and generate a semantically equivalent multi-insert
-   * statement to exectue.  Each Insert leg represents a single WHEN clause.  As much as possible,
+   * statement to execute.  Each Insert leg represents a single WHEN clause.  As much as possible,
    * the new SQL statement is made to look like the input SQL statement so that it's easier to map
    * Query Compiler errors from generated SQL to original one this way.
    * The generated SQL is a complete representation of the original input for the same reason.
@@ -634,11 +892,20 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     ASTNode onClause = (ASTNode) tree.getChild(2);
     String onClauseAsText = getMatchedText(onClause);
 
+    int whenClauseBegins = 3;
+    boolean hasHint = false;
+    // query hint
+    ASTNode qHint = (ASTNode) tree.getChild(3);
+    if (qHint.getType() == HiveParser.QUERY_HINT) {
+      hasHint = true;
+      whenClauseBegins++;
+    }
     Table targetTable = getTargetTable(target);
     validateTargetTable(targetTable);
-    List<ASTNode> whenClauses = findWhenClauses(tree);
+    List<ASTNode> whenClauses = findWhenClauses(tree, whenClauseBegins);
 
     StringBuilder rewrittenQueryStr = new StringBuilder("FROM\n");
+
     rewrittenQueryStr.append(Indent).append(getFullTableNameForSQL(target));
     if(isAliased(target)) {
       rewrittenQueryStr.append(" ").append(targetName);
@@ -658,6 +925,12 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     rewrittenQueryStr.append('\n');
     rewrittenQueryStr.append(Indent).append("ON ").append(onClauseAsText).append('\n');
 
+    // Add the hint if any
+    String hintStr = null;
+    if (hasHint) {
+      hintStr = " /*+ " + qHint.getText() + " */ ";
+    }
+
     /**
      * We allow at most 2 WHEN MATCHED clause, in which case 1 must be Update the other Delete
      * If we have both update and delete, the 1st one (in SQL code) must have "AND <extra predicate>"
@@ -667,22 +940,29 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     String extraPredicate = null;
     int numWhenMatchedUpdateClauses = 0, numWhenMatchedDeleteClauses = 0;
     int numInsertClauses = 0;
+    boolean hintProcessed = false;
     for(ASTNode whenClause : whenClauses) {
       switch (getWhenClauseOperation(whenClause).getType()) {
         case HiveParser.TOK_INSERT:
           numInsertClauses++;
-          handleInsert(whenClause, rewrittenQueryStr, target, onClause, targetTable, targetName, onClauseAsText);
+          handleInsert(whenClause, rewrittenQueryStr, target, onClause,
+                  targetTable, targetName, onClauseAsText, hintProcessed ? null : hintStr);
+          hintProcessed = true;
           break;
         case HiveParser.TOK_UPDATE:
           numWhenMatchedUpdateClauses++;
-          String s = handleUpdate(whenClause, rewrittenQueryStr, target, onClauseAsText, targetTable, extraPredicate);
+          String s = handleUpdate(whenClause, rewrittenQueryStr, target,
+                  onClauseAsText, targetTable, extraPredicate, hintProcessed ? null : hintStr);
+          hintProcessed = true;
           if(numWhenMatchedUpdateClauses + numWhenMatchedDeleteClauses == 1) {
             extraPredicate = s;//i.e. it's the 1st WHEN MATCHED
           }
           break;
         case HiveParser.TOK_DELETE:
           numWhenMatchedDeleteClauses++;
-          String s1 = handleDelete(whenClause, rewrittenQueryStr, target, onClauseAsText, targetTable, extraPredicate);
+          String s1 = handleDelete(whenClause, rewrittenQueryStr, target,
+                  onClauseAsText, targetTable, extraPredicate, hintProcessed ? null : hintStr);
+          hintProcessed = true;
           if(numWhenMatchedUpdateClauses + numWhenMatchedDeleteClauses == 1) {
             extraPredicate = s1;//i.e. it's the 1st WHEN MATCHED
           }
@@ -702,6 +982,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     if(numWhenMatchedDeleteClauses + numWhenMatchedUpdateClauses == 2 && extraPredicate == null) {
       throw new SemanticException(ErrorMsg.MERGE_PREDIACTE_REQUIRED, ctx.getCmd());
     }
+
     boolean validating = handleCardinalityViolation(rewrittenQueryStr, target, onClauseAsText,
       targetTable, numWhenMatchedDeleteClauses == 0 && numWhenMatchedUpdateClauses == 0);
     ReparseResult rr = parseRewrittenQuery(rewrittenQueryStr, ctx.getCmd());
@@ -714,7 +995,6 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
         insClauseIdx < rewrittenTree.getChildCount() - (validating ? 1 : 0/*skip cardinality violation clause*/);
         insClauseIdx++, whenClauseIdx++) {
       //we've added Insert clauses in order or WHEN items in whenClauses
-      ASTNode insertClause = (ASTNode) rewrittenTree.getChild(insClauseIdx);
       switch (getWhenClauseOperation(whenClauses.get(whenClauseIdx)).getType()) {
         case HiveParser.TOK_INSERT:
           rewrittenCtx.addDestNamePrefix(insClauseIdx, Context.DestClausePrefix.INSERT);
@@ -733,6 +1013,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
       //here means the last branch of the multi-insert is Cardinality Validation
       rewrittenCtx.addDestNamePrefix(rewrittenTree.getChildCount() - 1, Context.DestClausePrefix.INSERT);
     }
+
     try {
       useSuper = true;
       super.analyze(rewrittenTree, rewrittenCtx);
@@ -773,6 +1054,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
           }
         }
         outputs.removeAll(toRemove);
+        // TODO: why is this like that?
         for(ReadEntity re : partitionsRead) {
           for(WriteEntity original : toRemove) {
             //since we may have both Update and Delete branches, Auth needs to know
@@ -859,10 +1141,10 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
       .append("\n  SELECT cardinality_violation(")
       .append(getSimpleTableName(target)).append(".ROW__ID");
       addPartitionColsToSelect(targetTable.getPartCols(), rewrittenQueryStr, target);
-    
+
       rewrittenQueryStr.append(")\n WHERE ").append(onClauseAsString)
       .append(" GROUP BY ").append(getSimpleTableName(target)).append(".ROW__ID");
-    
+
       addPartitionColsToSelect(targetTable.getPartCols(), rewrittenQueryStr, target);
 
       rewrittenQueryStr.append(" HAVING count(*) > 1");
@@ -898,13 +1180,17 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
    */
   private String handleUpdate(ASTNode whenMatchedUpdateClause, StringBuilder rewrittenQueryStr,
                               ASTNode target, String onClauseAsString, Table targetTable,
-                              String deleteExtraPredicate) throws SemanticException {
+                              String deleteExtraPredicate, String hintStr) throws SemanticException {
     assert whenMatchedUpdateClause.getType() == HiveParser.TOK_MATCHED;
     assert getWhenClauseOperation(whenMatchedUpdateClause).getType() == HiveParser.TOK_UPDATE;
     String targetName = getSimpleTableName(target);
     rewrittenQueryStr.append("INSERT INTO ").append(getFullTableNameForSQL(target));
     addPartitionColsToInsert(targetTable.getPartCols(), rewrittenQueryStr);
-    rewrittenQueryStr.append("    -- update clause\n select ").append(targetName).append(".ROW__ID");
+    rewrittenQueryStr.append("    -- update clause\n SELECT ");
+    if (hintStr != null) {
+      rewrittenQueryStr.append(hintStr);
+    }
+    rewrittenQueryStr.append(targetName).append(".ROW__ID");
 
     ASTNode setClause = (ASTNode)getWhenClauseOperation(whenMatchedUpdateClause).getChild(0);
     //columns being updated -> update expressions; "setRCols" (last param) is null because we use actual expressions
@@ -941,7 +1227,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     if(deleteExtraPredicate != null) {
       rewrittenQueryStr.append(" AND NOT(").append(deleteExtraPredicate).append(")");
     }
-    rewrittenQueryStr.append("\n sort by ");
+    rewrittenQueryStr.append("\n SORT BY ");
     rewrittenQueryStr.append(targetName).append(".ROW__ID \n");
 
     setUpAccessControlInfoForUpdate(targetTable, setColsExprs);
@@ -956,7 +1242,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
    * @param updateExtraPredicate - see notes at caller
    */
   private String handleDelete(ASTNode whenMatchedDeleteClause, StringBuilder rewrittenQueryStr, ASTNode target,
-                            String onClauseAsString, Table targetTable, String updateExtraPredicate) throws SemanticException {
+                            String onClauseAsString, Table targetTable, String updateExtraPredicate, String hintStr) throws SemanticException {
     assert whenMatchedDeleteClause.getType() == HiveParser.TOK_MATCHED;
     assert getWhenClauseOperation(whenMatchedDeleteClause).getType() == HiveParser.TOK_DELETE;
     List<FieldSchema> partCols = targetTable.getPartCols();
@@ -964,7 +1250,11 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     rewrittenQueryStr.append("INSERT INTO ").append(getFullTableNameForSQL(target));
     addPartitionColsToInsert(partCols, rewrittenQueryStr);
 
-    rewrittenQueryStr.append("    -- delete clause\n select ").append(targetName).append(".ROW__ID ");
+    rewrittenQueryStr.append("    -- delete clause\n SELECT ");
+    if (hintStr != null) {
+      rewrittenQueryStr.append(hintStr);
+    }
+    rewrittenQueryStr.append(targetName).append(".ROW__ID ");
     addPartitionColsToSelect(partCols, rewrittenQueryStr, target);
     rewrittenQueryStr.append("\n   WHERE ").append(onClauseAsString);
     String extraPredicate = getWhenClausePredicate(whenMatchedDeleteClause);
@@ -975,7 +1265,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     if(updateExtraPredicate != null) {
       rewrittenQueryStr.append(" AND NOT(").append(updateExtraPredicate).append(")");
     }
-    rewrittenQueryStr.append("\n sort by ");
+    rewrittenQueryStr.append("\n SORT BY ");
     rewrittenQueryStr.append(targetName).append(".ROW__ID \n");
     return extraPredicate;
   }
@@ -1010,22 +1300,8 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
         throw raiseWrongType("TOK_TABREF|TOK_TABNAME|TOK_SUBQUERY", n);
     }
   }
-  /**
-   * @return table name in db.table form with proper quoting/escaping to be used in a SQL statement
-   */
-  private String getFullTableNameForSQL(ASTNode n) throws SemanticException {
-    switch (n.getType()) {
-      case HiveParser.TOK_TABNAME:
-        String[] tableName = getQualifiedTableName(n);
-        return getDotName(new String[] {
-          HiveUtils.unparseIdentifier(tableName[0], this.conf),
-          HiveUtils.unparseIdentifier(tableName[1], this.conf) });
-      case HiveParser.TOK_TABREF:
-        return getFullTableNameForSQL((ASTNode) n.getChild(0));
-      default:
-        throw raiseWrongType("TOK_TABNAME", n);
-    }
-  }  private static final class ReparseResult {
+
+  private static final class ReparseResult {
     private final ASTNode rewrittenTree;
     private final Context rewrittenCtx;
     ReparseResult(ASTNode n, Context c) {
@@ -1033,9 +1309,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
       rewrittenCtx = c;
     }
   }
-  private static IllegalArgumentException raiseWrongType(String expectedTokName, ASTNode n) {
-    return new IllegalArgumentException("Expected " + expectedTokName + "; got " + n.getType());
-  }
+
   private boolean isAliased(ASTNode n) {
     switch (n.getType()) {
       case HiveParser.TOK_TABREF:
@@ -1052,10 +1326,10 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
   /**
    * Collect WHEN clauses from Merge statement AST
    */
-  private List<ASTNode> findWhenClauses(ASTNode tree) throws SemanticException {
+  private List<ASTNode> findWhenClauses(ASTNode tree, int start) throws SemanticException {
     assert tree.getType() == HiveParser.TOK_MERGE;
     List<ASTNode> whenClauses = new ArrayList<>();
-    for(int idx = 3; idx < tree.getChildCount(); idx++) {
+    for(int idx = start; idx < tree.getChildCount(); idx++) {
       ASTNode whenClause = (ASTNode)tree.getChild(idx);
       assert whenClause.getType() == HiveParser.TOK_MATCHED ||
         whenClause.getType() == HiveParser.TOK_NOT_MATCHED :
@@ -1080,7 +1354,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
    */
   private String getWhenClausePredicate(ASTNode whenClause) {
     if(!(whenClause.getType() == HiveParser.TOK_MATCHED || whenClause.getType() == HiveParser.TOK_NOT_MATCHED)) {
-      throw  raiseWrongType("Expected TOK_MATCHED|TOK_NOT_MATCHED", whenClause);
+      throw raiseWrongType("Expected TOK_MATCHED|TOK_NOT_MATCHED", whenClause);
     }
     if(whenClause.getChildCount() == 2) {
       return getMatchedText((ASTNode)whenClause.getChild(1));
@@ -1093,29 +1367,80 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
    * @throws SemanticException
    */
   private void handleInsert(ASTNode whenNotMatchedClause, StringBuilder rewrittenQueryStr, ASTNode target,
-                            ASTNode onClause, Table targetTable,
-                            String targetTableNameInSourceQuery, String onClauseAsString) throws SemanticException {
+                            ASTNode onClause, Table targetTable, String targetTableNameInSourceQuery,
+                            String onClauseAsString, String hintStr) throws SemanticException {
+    ASTNode whenClauseOperation = getWhenClauseOperation(whenNotMatchedClause);
     assert whenNotMatchedClause.getType() == HiveParser.TOK_NOT_MATCHED;
-    assert getWhenClauseOperation(whenNotMatchedClause).getType() == HiveParser.TOK_INSERT;
-    List<FieldSchema> partCols = targetTable.getPartCols();
-    String valuesClause = getMatchedText((ASTNode)getWhenClauseOperation(whenNotMatchedClause).getChild(0));
-    valuesClause = valuesClause.substring(1, valuesClause.length() - 1);//strip '(' and ')'
+    assert whenClauseOperation.getType() == HiveParser.TOK_INSERT;
+
+    // identify the node that contains the values to insert and the optional column list node
+    ArrayList<Node> children = whenClauseOperation.getChildren();
+    ASTNode valuesNode =
+        (ASTNode)children.stream().filter(n -> ((ASTNode)n).getType() == HiveParser.TOK_FUNCTION).findFirst().get();
+    ASTNode columnListNode =
+        (ASTNode)children.stream().filter(n -> ((ASTNode)n).getType() == HiveParser.TOK_TABCOLNAME).findFirst()
+        .orElse(null);
+
+    // if column list is specified, then it has to have the same number of elements as the values
+    // valuesNode has a child for struct, the rest are the columns
+    if (columnListNode != null && columnListNode.getChildCount() != (valuesNode.getChildCount() - 1)) {
+      throw new SemanticException(String.format("Column schema must have the same length as values (%d vs %d)",
+          columnListNode.getChildCount(), valuesNode.getChildCount() - 1));
+    }
 
     rewrittenQueryStr.append("INSERT INTO ").append(getFullTableNameForSQL(target));
-    addPartitionColsToInsert(partCols, rewrittenQueryStr);
+    if (columnListNode != null) {
+      rewrittenQueryStr.append(' ').append(getMatchedText(columnListNode));
+    }
+    addPartitionColsToInsert(targetTable.getPartCols(), rewrittenQueryStr);
+
+    rewrittenQueryStr.append("    -- insert clause\n  SELECT ");
+    if (hintStr != null) {
+      rewrittenQueryStr.append(hintStr);
+    }
 
     OnClauseAnalyzer oca = new OnClauseAnalyzer(onClause, targetTable, targetTableNameInSourceQuery,
-      conf, onClauseAsString);
+        conf, onClauseAsString);
     oca.analyze();
-    rewrittenQueryStr.append("    -- insert clause\n  select ")
-      .append(valuesClause).append("\n   WHERE ").append(oca.getPredicate());
+
+    String valuesClause = getMatchedText(valuesNode);
+    valuesClause = valuesClause.substring(1, valuesClause.length() - 1);//strip '(' and ')'
+    valuesClause = replaceDefaultKeywordForMerge(valuesClause, targetTable, columnListNode);
+    rewrittenQueryStr.append(valuesClause).append("\n   WHERE ").append(oca.getPredicate());
+
     String extraPredicate = getWhenClausePredicate(whenNotMatchedClause);
-    if(extraPredicate != null) {
+    if (extraPredicate != null) {
       //we have WHEN NOT MATCHED AND <boolean expr> THEN INSERT
       rewrittenQueryStr.append(" AND ")
         .append(getMatchedText(((ASTNode)whenNotMatchedClause.getChild(1)))).append('\n');
     }
   }
+
+  private String replaceDefaultKeywordForMerge(String valueClause, Table table, ASTNode columnListNode)
+      throws SemanticException {
+    if (!valueClause.toLowerCase().contains("`default`")) {
+      return valueClause;
+    }
+
+    Map<String, String> colNameToDefaultConstraint = getColNameToDefaultValueMap(table);
+    String[] values = valueClause.trim().split(",");
+    String[] replacedValues = new String[values.length];
+
+    // the list of the column names may be set in the query
+    String[] columnNames = columnListNode == null ?
+      table.getAllCols().stream().map(f -> f.getName()).toArray(size -> new String[size]) :
+      columnListNode.getChildren().stream().map(n -> ((ASTNode)n).toString()).toArray(size -> new String[size]);
+
+    for (int i = 0; i < values.length; i++) {
+      if (values[i].trim().toLowerCase().equals("`default`")) {
+        replacedValues[i] = MapUtils.getString(colNameToDefaultConstraint, columnNames[i], "null");
+      } else {
+        replacedValues[i] = values[i];
+      }
+    }
+    return StringUtils.join(replacedValues, ',');
+  }
+
   /**
    * Suppose the input Merge statement has ON target.a = source.b and c = d.  Assume, that 'c' is from
    * target table and 'd' is from source expression.  In order to properly
@@ -1226,7 +1551,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
       List<String> targetCols = table2column.get(targetTableNameInSourceQuery.toLowerCase());
       if(targetCols == null) {
         /*e.g. ON source.t=1
-        * this is not strictly speaking invlaid but it does ensure that all columns from target
+        * this is not strictly speaking invalid but it does ensure that all columns from target
         * table are all NULL for every row.  This would make any WHEN MATCHED clause invalid since
         * we don't have a ROW__ID.  The WHEN NOT MATCHED could be meaningful but it's just data from
         * source satisfying source.t=1...  not worth the effort to support this*/

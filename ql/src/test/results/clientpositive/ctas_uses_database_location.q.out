@@ -16,8 +16,14 @@ POSTHOOK: type: SWITCHDATABASE
 POSTHOOK: Input: database:db1
 PREHOOK: query: EXPLAIN CREATE TABLE table_db1 AS SELECT * FROM default.src
 PREHOOK: type: CREATETABLE_AS_SELECT
+PREHOOK: Input: default@src
+PREHOOK: Output: database:db1
+PREHOOK: Output: db1@table_db1
 POSTHOOK: query: EXPLAIN CREATE TABLE table_db1 AS SELECT * FROM default.src
 POSTHOOK: type: CREATETABLE_AS_SELECT
+POSTHOOK: Input: default@src
+POSTHOOK: Output: database:db1
+POSTHOOK: Output: db1@table_db1
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-7 depends on stages: Stage-1 , consists of Stage-4, Stage-3, Stage-5
@@ -48,6 +54,7 @@ STAGE PLANS:
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     name: db1.table_db1
+      Execution mode: vectorized
 
   Stage: Stage-7
     Conditional Operator
@@ -137,6 +144,7 @@ Retention:          	0
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
 	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	bucketing_version   	2                   
 	numFiles            	1                   
 	numRows             	500                 
 	rawDataSize         	5312                

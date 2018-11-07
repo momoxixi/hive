@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.metastore;
 
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
@@ -34,6 +35,7 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.ShowLocksRequest;
 import org.apache.hadoop.hive.metastore.api.ShowLocksResponse;
 import org.apache.hadoop.hive.metastore.api.UnknownTableException;
+import org.apache.hadoop.hive.metastore.api.WriteNotificationLogRequest;
 import org.apache.thrift.TException;
 
 
@@ -76,9 +78,13 @@ public final class SynchronizedMetaStoreClient {
     return client.add_partition(partition);
   }
 
-  public synchronized void alter_partition(String dbName, String tblName,
-      Partition newPart, EnvironmentContext environmentContext) throws TException {
-    client.alter_partition(dbName, tblName, newPart, environmentContext);
+  public synchronized int add_partitions(List<Partition> partitions) throws TException {
+    return client.add_partitions(partitions);
+  }
+
+  public synchronized void alter_partition(String catName, String dbName, String tblName,
+      Partition newPart, EnvironmentContext environmentContext, String writeIdList) throws TException {
+    client.alter_partition(catName, dbName, tblName, newPart, environmentContext, writeIdList);
   }
 
   public synchronized LockResponse checkLock(long lockid) throws TException {
@@ -108,7 +114,19 @@ public final class SynchronizedMetaStoreClient {
     return client.fireListenerEvent(rqst);
   }
 
+  public synchronized void addWriteNotificationLog(WriteNotificationLogRequest rqst) throws TException {
+    client.addWriteNotificationLog(rqst);
+  }
+
   public synchronized void close() {
     client.close();
+  }
+
+  public boolean isSameConfObj(Configuration c) {
+    return client.isSameConfObj(c);
+  }
+
+  public boolean isCompatibleWith(Configuration c) {
+    return client.isCompatibleWith(c);
   }
 }

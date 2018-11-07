@@ -26,8 +26,16 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@blobstore_table
 PREHOOK: query: EXPLAIN EXTENDED FROM hdfs_table INSERT OVERWRITE TABLE blobstore_table SELECT hdfs_table.key GROUP BY hdfs_table.key ORDER BY hdfs_table.key
 PREHOOK: type: QUERY
+PREHOOK: Input: default@hdfs_table
+PREHOOK: Output: default@blobstore_table
 POSTHOOK: query: EXPLAIN EXTENDED FROM hdfs_table INSERT OVERWRITE TABLE blobstore_table SELECT hdfs_table.key GROUP BY hdfs_table.key ORDER BY hdfs_table.key
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@hdfs_table
+POSTHOOK: Output: default@blobstore_table
+OPTIMIZED SQL: SELECT `key`
+FROM `default`.`hdfs_table`
+GROUP BY `key`
+ORDER BY `key`
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -59,6 +67,7 @@ STAGE PLANS:
                   Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
                   tag: -1
                   auto parallelism: false
+      Execution mode: vectorized
       Path -> Alias:
 #### A masked pattern was here ####
       Path -> Partition:
@@ -70,6 +79,7 @@ STAGE PLANS:
             properties:
               COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true"}}
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns key
               columns.comments 
@@ -91,6 +101,7 @@ STAGE PLANS:
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true"}}
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key
                 columns.comments 
@@ -143,11 +154,12 @@ STAGE PLANS:
             GatherStats: false
             Reduce Output Operator
               key expressions: _col0 (type: int)
-              null sort order: a
+              null sort order: z
               sort order: +
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               tag: -1
               auto parallelism: false
+      Execution mode: vectorized
       Path -> Alias:
 #### A masked pattern was here ####
       Path -> Partition:
@@ -194,6 +206,7 @@ STAGE PLANS:
                 properties:
                   COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true"}}
                   bucket_count -1
+                  bucketing_version 2
                   column.name.delimiter ,
                   columns key
                   columns.comments 
@@ -261,6 +274,7 @@ STAGE PLANS:
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true"}}
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key
                 columns.comments 
@@ -291,8 +305,16 @@ STAGE PLANS:
 
 PREHOOK: query: EXPLAIN EXTENDED FROM hdfs_table INSERT OVERWRITE TABLE blobstore_table SELECT hdfs_table.key GROUP BY hdfs_table.key ORDER BY hdfs_table.key
 PREHOOK: type: QUERY
+PREHOOK: Input: default@hdfs_table
+PREHOOK: Output: default@blobstore_table
 POSTHOOK: query: EXPLAIN EXTENDED FROM hdfs_table INSERT OVERWRITE TABLE blobstore_table SELECT hdfs_table.key GROUP BY hdfs_table.key ORDER BY hdfs_table.key
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@hdfs_table
+POSTHOOK: Output: default@blobstore_table
+OPTIMIZED SQL: SELECT `key`
+FROM `default`.`hdfs_table`
+GROUP BY `key`
+ORDER BY `key`
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-2 depends on stages: Stage-1
@@ -324,6 +346,7 @@ STAGE PLANS:
                   Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
                   tag: -1
                   auto parallelism: false
+      Execution mode: vectorized
       Path -> Alias:
 #### A masked pattern was here ####
       Path -> Partition:
@@ -335,6 +358,7 @@ STAGE PLANS:
             properties:
               COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true"}}
               bucket_count -1
+              bucketing_version 2
               column.name.delimiter ,
               columns key
               columns.comments 
@@ -356,6 +380,7 @@ STAGE PLANS:
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true"}}
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key
                 columns.comments 
@@ -408,11 +433,12 @@ STAGE PLANS:
             GatherStats: false
             Reduce Output Operator
               key expressions: _col0 (type: int)
-              null sort order: a
+              null sort order: z
               sort order: +
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               tag: -1
               auto parallelism: false
+      Execution mode: vectorized
       Path -> Alias:
 #### A masked pattern was here ####
       Path -> Partition:
@@ -459,6 +485,7 @@ STAGE PLANS:
                 properties:
                   COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true"}}
                   bucket_count -1
+                  bucketing_version 2
                   column.name.delimiter ,
                   columns key
                   columns.comments 
@@ -526,6 +553,7 @@ STAGE PLANS:
               properties:
                 COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true"}}
                 bucket_count -1
+                bucketing_version 2
                 column.name.delimiter ,
                 columns key
                 columns.comments 

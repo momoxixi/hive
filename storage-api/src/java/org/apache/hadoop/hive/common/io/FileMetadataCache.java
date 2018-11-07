@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.common.io;
 
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -32,6 +33,27 @@ public interface FileMetadataCache {
    */
   MemoryBufferOrBuffers getFileMetadata(Object fileKey);
 
+  @Deprecated
+  MemoryBufferOrBuffers putFileMetadata(
+      Object fileKey, int length, InputStream is) throws IOException;
+
+  @Deprecated
+  MemoryBufferOrBuffers putFileMetadata(Object fileKey, ByteBuffer tailBuffer);
+
+  @Deprecated
+  MemoryBufferOrBuffers putFileMetadata(
+      Object fileKey, int length, InputStream is, String tag) throws IOException;
+
+  @Deprecated
+  MemoryBufferOrBuffers putFileMetadata(Object fileKey, ByteBuffer tailBuffer, String tag);
+
+  /**
+   * Releases the buffer returned from getFileMetadata or putFileMetadata method.
+   * @param buffer The buffer to release.
+   */
+  void decRefBuffer(MemoryBufferOrBuffers buffer);
+
+
   /**
    * Puts the metadata for a given file (e.g. a footer buffer into cache).
    * @param fileKey The file key.
@@ -40,14 +62,9 @@ public interface FileMetadataCache {
    * @return The buffer or buffers representing the cached footer.
    *         The caller must decref this buffer when done.
    */
-  MemoryBufferOrBuffers putFileMetadata(
-      Object fileKey, int length, InputStream is) throws IOException;
+  MemoryBufferOrBuffers putFileMetadata(Object fileKey, ByteBuffer tailBuffer,
+      String tag, AtomicBoolean isStopped);
 
-  MemoryBufferOrBuffers putFileMetadata(Object fileKey, ByteBuffer tailBuffer);
-
-  /**
-   * Releases the buffer returned from getFileMetadata or putFileMetadata method.
-   * @param buffer The buffer to release.
-   */
-  void decRefBuffer(MemoryBufferOrBuffers buffer);
-} 
+  MemoryBufferOrBuffers putFileMetadata(Object fileKey, int length,
+      InputStream is, String tag, AtomicBoolean isStopped) throws IOException;
+}
